@@ -1,0 +1,84 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "g++.exe - Build and debug program",
+            "type": "cppdbg",
+            "request": "launch",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceRoot}/bin",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "program": "",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": false
+                }
+            ],
+            "windows": {
+                "program": "${workspaceRoot}\\bin\\main.exe",
+                "miDebuggerPath": "C:\\msys64\\mingw64\\bin\\gdb.exe",
+            },
+            "linux": {
+                "program": "${workspaceRoot}/bin/main",
+                "miDebuggerPath": "/usr/bin/gdb",
+            },
+            "preLaunchTask": "G++: build program"
+        },
+        {
+            "name": "g++.exe - Build and debug active file",
+            "type": "cppdbg",
+            "request": "launch",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceRoot}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "program": "",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": false
+                }
+            ],
+            "windows": {
+                "program": "${workspaceRoot}\\main.exe",
+                "miDebuggerPath": "C:\\msys64\\mingw64\\bin\\gdb.exe",
+            },
+            "linux": {
+                "program": "${workspaceRoot}/bin/${fileBasenameNoExtension}",
+                "miDebuggerPath": "/usr/bin/gdb",
+            },
+            "preLaunchTask": "G++: build opened file"
+        }, 
+        {
+            "name": "Launch RenderDoc",
+            "type": "cppdbg",
+            "request": "launch",
+            "cwd": "${workspaceRoot}",
+            "externalConsole": false,
+            "program": "",
+            "args": [],
+            "windows": {
+                "program": "C:\\Program Files\\RenderDoc\\qrenderdoc.exe",
+                "args": [
+                    "${workspaceRoot}\\bin\\main.exe"
+                ]
+            },
+            "linux": {
+                "program": "${workspaceRoot}/main",
+                "miDebuggerPath": "/usr/bin/gdb",
+            },
+            "preLaunchTask": "G++: build program"
+        },
+    ]
+}

@@ -1,0 +1,220 @@
+#include <iostream>
+#include "glad.h"
+#include <GLFW/glfw3.h>  
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <vector>
+#include <fstream>
+
+std::string readFile(const std::string& filePath) {
+    std::string content;
+    std::ifstream fileStream(filePath, std::ios::in);
+
+    if(!fileStream.is_open()) {
+        std::cerr << "File does not exist:" << filePath << std::endl;
+        return "";
+    }
+
+    std::string line = "";
+    while(!fileStream.eof()) {
+        std::getline(fileStream, line);
+        content.append(line + "\n");
+    }
+
+    fileStream.close();
+    return content;
+}
+
+void DebugShaderInfo(GLuint shader)
+{
+    GLint result = GL_FALSE;
+    int logLength;
+    glGetShaderiv(shader, GL_COMPILE_STATUS, &result);
+    glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &logLength);
+    std::vector<char> shaderError((logLength > 1) ? logLength : 1);
+    glGetShaderInfoLog(shader, logLength, NULL, &shaderError[0]);
+    std::cout << &shaderError[0] << std::endl;
+}
+
+void DebugProgramInfo(GLuint program)
+{
+    GLint result = GL_FALSE;
+    int logLength;
+    glGetProgramiv(program, GL_LINK_STATUS, &result);
+    glGetProgramiv(program, GL_INFO_LOG_LENGTH, &logLength);
+    std::vector<char> programError( (logLength > 1) ? logLength : 1 );
+    glGetProgramInfoLog(program, logLength, NULL, &programError[0]);
+    std::cout << &programError[0] << std::endl;
+}
+
+
+GLuint CreateProgram(const std::string& vertexPath, const std::string&  fragmentPath)
+{
+    GLuint vertShader = glCreateShader(GL_VERTEX_SHADER);
+    GLuint fragShader = glCreateShader(GL_FRAGMENT_SHADER);
+
+    std::string vertShaderStr = readFile(vertexPath);
+    std::string fragShaderStr = readFile(fragmentPath);
+    const char *vertShaderSrc = vertShaderStr.c_str();
+    const char *fragShaderSrc = fragShaderStr.c_str();
+
+    glShaderSource(vertShader, 1, &vertShaderSrc, NULL);
+    glCompileShader(vertShader);
+    DebugShaderInfo(vertShader);
+
+    glShaderSource(fragShader, 1, &fragShaderSrc, NULL);
+    glCompileShader(fragShader);
+    DebugShaderInfo(fragShader);
+
+    GLuint program = glCreateProgram();
+    glAttachShader(program, vertShader);
+    glAttachShader(program, fragShader);
+    glLinkProgram(program);
+
+    DebugProgramInfo(program);
+
+    glDeleteShader(vertShader);
+    glDeleteShader(fragShader);
+    return program;
+}
+
+
+
+//https://codereview.stackexchange.com/users/169312/hex
+//https://codereview.stackexchange.com/questions/211069/c-opengl-minimal-vao-example
+namespace engine {
+
+    using Index = unsigned int;
+
+    struct Vertex {
+        glm::vec3  position;
+        glm::vec2  texcoord;
+    };
+
+    struct Mesh {
+        std::vector<Vertex> vertices;
+        std::vector<Index> indices;
+    };
+
+    struct MeshRenderer {
+        GLsizei count;
+        GLuint vao;
+
+        ~MeshRenderer() {
+            // Is this the only call needed to clean up a vao?
+            glDeleteVertexArrays(1, &vao);
+        }
+    };
+
+    class Engine {
+        MeshRenderer mr;
+
+    public:
+        Engine() {
+
+            glEnable(GL_CULL_FACE);
+            glCullFace(GL_BACK);
+
+            glClearColor(0, 0, 0, 0);
+
+            Mesh mesh;
+
+            mesh.vertices.push_back({{ 0.5f,  0.5f, 0.0f}, {0.5f,  0.5f}});
+            mesh.indices.push_back(0);
+
+            mesh.vertices.push_back({{-0.5f,  0.5f, 0.0f}, {-0.5f,  0.5f}});
+            mesh.indices.push_back(1);
+
+            mesh.vertices.push_back({{-0.5f, -0.5f, 0.0f}, {-0.5f, -0.5f}});
+            mesh.indices.push_back(2);
+
+            mr.count = mesh.indices.size();
+
+            // Only needed temp while binding to vao.
+            GLuint vbo, ibo;
+
+            glGenVertexArrays(1, &mr.vao); // Vertex  Array  Object
+            glGenBuffers(1, &vbo); // Vertex  Buffer Object (temp)
+            glGenBuffers(1, &ibo); // Element Buffer Object (temp)
+
+            glBindVertexArray(mr.vao);
+
+            glBindBuffer(GL_ARRAY_BUFFER, vbo);
+            glBufferData(GL_ARRAY_BUFFER, mesh.vertices.size() * sizeof(Vertex), mesh.vertices.data(), GL_STATIC_DRAW);
+
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
+            glBufferData(GL_ELEMENT_ARRAY_BUFFER, mesh.indices.size() * sizeof(Index), mesh.indices.data(), GL_STATIC_DRAW);
+
+            glEnableVertexAttribArray(0);
+            glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<const void*>(offsetof(Vertex, position)));
+
+            glEnableVertexAttribArray(1);
+            glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<const void*>(offsetof(Vertex, texcoord)));
+
+            glBindVertexArray(0);
+
+            std::cout << vbo << ibo << mr.vao << mr.count;
+            for(auto i : mesh.vertices)
+            {
+                std::cout << i.position.x << i.position.y << i.position.z;
+            }
+
+            for(auto i : mesh.indices)
+            {
+                std::cout << i;
+            }
+
+            // Is there any reason not to clean these up now that they have been bound to the vao?
+            glDeleteBuffers(1, &vbo);
+            glDeleteBuffers(1, &ibo);
+        }
+
+        void onLoop(double time) {
+            glClear(GL_COLOR_BUFFER_BIT);
+
+            glBindVertexArray(mr.vao);
+            glDrawElements(GL_TRIANGLES, mr.count, GL_UNSIGNED_INT, nullptr);
+        }
+    };
+}
+
+void framebuffer_size_callback(GLFWwindow* window, int width, int height)
+{
+    glViewport(0, 0, width, height);
+}
+
+int main()
+{
+    glfwInit();
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    //glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+    GLFWwindow* window = glfwCreateWindow(800, 600, "LearnOpenGL", NULL, NULL);
+    if (window == NULL) {
+            std::cout << "Failed to create GLFW window" << std::endl;
+            glfwTerminate();
+            return -1;
+    }
+    glfwMakeContextCurrent(window);
+    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
+        std::cout << "Failed to initialize GLAD" << std::endl;
+        return -1;
+    }
+
+    engine::Engine engine = engine::Engine();
+    GLuint program = CreateProgram("./shaders/vertex.shader", "./shaders/fragment.shader");
+    glViewport(0, 0, 800, 600);
+
+    glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+    while(!glfwWindowShouldClose(window)) {
+        glClear(GL_COLOR_BUFFER_BIT);
+        // Renderer::RenderObject(object);
+        glUseProgram(program);
+        engine.onLoop(1/144);        
+        glfwSwapBuffers(window);
+        glfwPollEvents();    
+    }
+    glfwTerminate();
+    return 0;
+}
