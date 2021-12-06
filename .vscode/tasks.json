@@ -4,19 +4,7 @@
             "type": "shell",
              "label": "G++: build program",
             "windows": {
-                "command": "C:\\msys64\\mingw64\\bin\\g++.exe",
-                "args": [
-                    "-g",
-                    "-std=c++17",
-                    "-I${workspaceRoot}\\include",
-                    "-I${workspaceRoot}\\include\\glad",
-                    "-L${workspaceRoot}\\lib",
-                    "${workspaceRoot}\\src\\*.cpp",
-                    "${workspaceRoot}\\bintmp\\glad.o",
-                    "-lglfw3dll",
-                    "-o",
-                    "${workspaceFolder}\\bin\\main.exe"
-                ]
+                "command": "${workspaceRoot}/build.bat",
             },
             "linux": {
                 "command": "${workspaceRoot}/build.sh",

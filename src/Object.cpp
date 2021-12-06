@@ -2,7 +2,7 @@
 #include <string>
 #include <glm/gtc/type_ptr.hpp>
 
-Object::Object() : transform(glm::mat4(1.0f)), position({0,0,0}), scale({1,1,1}), shader(nullptr), renderer(nullptr)
+Object::Object() : transform(glm::mat4(1.0f)), position({0,0,0}), scale({1,1,1}), rotation(glm::quat()), shader(nullptr), renderer(nullptr)
 {
 
 }

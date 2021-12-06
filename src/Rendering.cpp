@@ -5,12 +5,15 @@
 #include <glad.h>
 #include <glm/gtc/type_ptr.hpp>
 
+#include "gldebug.hpp"
 #include "fileio.hpp"
+
 #include "Rendering.hpp"
 #include "Object.hpp"
-#include "gldebug.hpp"
+#include "Camera.hpp"
 
 std::map<std::string, Shader> Renderer::shaders = std::map<std::string, Shader>();
+Camera* Renderer::camera;
 
 void Renderer::CreateProgram(const std::string& name, const std::string& vertexPath, const std::string&  fragmentPath)
 {
@@ -73,20 +76,19 @@ void Renderer::RenderObject(Object* object)
     MeshRenderer* renderer = object->renderer;
     auto program = shaders["default"].shaderProgram;
     
-    if (object->flags & Object::Flags::DirtyMat)
-    {
-        object->UpdateTransform();
-    }
-    
-
-    GLCall(glUseProgram(program));
     glm::mat4 transform = glm::mat4(1.0f);
 
     // GLfloat* tFloatPtr = glm::value_ptr(transform);
     glm::mat4* tPtr = object->PtrTransform();
+    glm::mat4 mvp = camera->projection * camera->view * object->GetTransform();
+
+    GLCall(glUseProgram(program));
+    
+    GLCall(GLuint uniColour = glGetUniformLocation(program, "col_uni"));
+    GLCall(glUniform4fv(uniColour, 1, &(object->colour).x));//&(tPtr[0][0]).x)
 
     GLCall(GLuint uniTransform = glGetUniformLocation(program, "transform"));
-    GLCall(glUniformMatrix4fv(uniTransform, 1, GL_FALSE,  &(tPtr[0][0]).x));
+    GLCall(glUniformMatrix4fv(uniTransform, 1, GL_FALSE,  glm::value_ptr(mvp)));//&(tPtr[0][0]).x)
 
     // GLuint uniTransform = glGetUniformLocation(program, "model");
     // glUniformMatrix4fv(uniTransform, 1, GL_FALSE, glm::value_ptr(object->GetTransform()));

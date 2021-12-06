@@ -4,10 +4,11 @@
 #include <GLFW/glfw3.h>  
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtx/transform.hpp>
 #include <vector>
 #include "Mesh.hpp"
 #include "Object.hpp"
-
+#include "Camera.hpp"
 #include "Rendering.hpp"
 #include "gldebug.hpp"
 
@@ -39,22 +40,34 @@ void GLAPIENTRY MessageCallback( GLenum source, GLenum type, GLuint id, GLenum s
     fprintf( stderr, "GL CALLBACK: %s type = 0x%x, severity = 0x%x, message = %s\n",( type == GL_DEBUG_TYPE_ERROR ? "** GL ERROR **" : "" ), type, severity, message );
 }
 
-
 int main() {
 
-    glm::vec3 cameraPos = glm::vec3(0.0f,0.0f,3.0f);
+    std::cout << "Am I working?" << std::endl;
+    Camera* camera = new Camera();
+    Renderer::camera = camera;
+    glm::vec3 cameraPos = glm::vec3(6.0f,3.5f,7.0f);
     glm::vec3 cameraTarget = glm::vec3(0.0f, 0.0f, 0.0f);
-    glm::vec3 cameraDirection = glm::normalize(cameraPos - cameraTarget);
+    // glm::vec3 cameraDirection = glm::normalize(cameraPos - cameraTarget);
     glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
-    glm::vec3 cameraRight = glm::normalize(glm::cross(up, cameraDirection));
-    glm::vec3 cameraUp = glm::cross(cameraDirection, cameraRight);
+    // glm::vec3 cameraRight = glm::normalize(glm::cross(up, cameraDirection));
+    // glm::vec3 cameraUp = glm::cross(cameraDirection, cameraRight);
 
-    glm::vec3 view;
+    glm::mat4 cameraMatrix = glm::lookAt(
+        cameraPos, // the position of your camera, in world space
+        cameraTarget,   // where you want to look at, in world space
+        up        // probably glm::vec3(0,1,0), but (0,-1,0) would make you looking upside-down, which can be great too
+    );
 
+    glm::mat4 projectionMatrix = glm::perspective(
+        glm::radians(70.0f), // The vertical Field of View, in radians: the amount of "zoom". Think "camera lens". Usually between 90° (extra wide) and 30° (quite zoomed in)
+        4.0f / 3.0f,       // Aspect Ratio. Depends on the size of your window. Notice that 4/3 == 800/600 == 1280/960, sounds familiar ?
+        0.1f,              // Near clipping plane. Keep as big as possible, or you'll get precision issues.
+        100.0f             // Far clipping plane. Keep as little as possible.
+    );
 
-    glm::mat4 test = glm::mat4(1.0f,2.0f,3.0f,4.0f,5.0f,6.0f,7.0f,8.0f,9.0f,10.0f,11.0f,12.0f,13.0f,14.0f,15.0f,16.0f);
-
-    glm::mat4 Projection = glm::perspective(45.0f, 4.0f / 3.0f, 0.1f, 100.f); 
+    camera->SetPosition(cameraPos);
+    camera->projection = projectionMatrix;
+    camera->view = cameraMatrix;
 
     Mesh* mesh = new Mesh();
 
@@ -107,7 +120,7 @@ int main() {
         std::cout << "Failed to initialize GLAD" << std::endl;
         return -1;
     }
-
+    glEnable(GL_DEPTH_TEST);  
     glEnable(GL_CULL_FACE); 
     glViewport(0, 0, 800, 600);
     // During init, enable debug output
@@ -129,11 +142,12 @@ int main() {
     //object->renderer = renderer;
     
     Object* secondary = GenerateExample();
-#define MAPX 2
+#define MAPX 6
 #define MAPY 2
-#define MAPZ 2
-
-    Object* map[MAPX * MAPY * MAPZ];
+#define MAPZ 5
+#define INDEX(x,y,z) x + MAPY * (y + MAPZ * z)
+    Object* map[MAPX][MAPY][MAPZ];
+#define PLACE(x,y,z,b) map[x][y][z]->colour = b * (90.1f + (rand() % 11)) / 100.0f; tmppos = glm::vec3(x, y, z); map[x][y][z]->SetPosition(tmppos);
 
     int m = 0;
     for (size_t x = 0; x < MAPX; x++)
@@ -142,32 +156,82 @@ int main() {
         {
             for (size_t z = 0; z < MAPZ; z++)
             {
-                map[m] = new Object();
-                map[m]->renderer = object->renderer;
-                *(map[m]->PtrPosition()) = {x/1.0f,y/1.0f,z/1.0f};
+                map[x][y][z] = new Object();
+                map[x][y][z]->renderer = object->renderer;
                 m++;
             }
         }
     }
+
+    auto sand = glm::vec4(241, 228, 175, 1.0) * (1.0F/255.0F);
+    auto water = glm::vec4(25, 58, 145, 1.0) * (1.0F/255.0F);
+    auto grass = glm::vec4(22, 158, 38, 1.0) * (1.0F/255.0F);
+    
+    glm::vec3 tmppos(0,0,0);
+    //Grass
+    PLACE(0,0,0,grass);
+    PLACE(1,0,0,grass);
+    PLACE(2,0,0,grass);
+    PLACE(3,0,0,grass);
+
+    PLACE(0,0,1,grass);
+    PLACE(1,0,1,grass);
+    PLACE(2,0,1,grass);
+    PLACE(0,0,2,grass);
+    PLACE(1,0,2,grass);
+
+    PLACE(0,1,0,grass*0.9f);
+    PLACE(1,1,0,grass*0.9f);
+    PLACE(2,1,0,grass*0.9f);
+    PLACE(0,1,1,grass*0.9f);
+    PLACE(1,1,1,grass*0.9f);
+
+    PLACE(4,0,0,sand);
+    PLACE(3,0,1,sand);
+    PLACE(2,0,2,sand);
+    PLACE(3,0,2,sand);
+    PLACE(1,0,3,sand);
+    PLACE(0,0,3,sand);
+
+    PLACE(5,0,0, water);
+    PLACE(5,0,1, water);
+    PLACE(4,0,1, water);
+    PLACE(5,0,2, water);
+    PLACE(5,0,2, water);
+    PLACE(4,0,2, water);
+    PLACE(5,0,3, water);
+    PLACE(4,0,3, water);
+    PLACE(3,0,3, water);
+    PLACE(2,0,3, water);
+    PLACE(5,0,4, water);
+    PLACE(4,0,4, water);
+    PLACE(3,0,4, water);
+    PLACE(2,0,4, water);
+    PLACE(1,0,4, water);
+    PLACE(0,0,4, water);
 
     
     glm::mat4 mat4id = glm::mat4(1.0);
     *object->PtrTransform() = glm::translate(mat4id, glm::vec3(0.0f,0.0f,0.5f));
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
     while(!glfwWindowShouldClose(window)) {
-        glClear(GL_COLOR_BUFFER_BIT);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         float rotation = glfwGetTime();
 
-        //object->transform = glm::scale(object->transform, glm::vec3(glfwGetTime()/10.0));
-        // for (size_t i = 0; i < MAPX * MAPY* MAPZ; i++)
-        // {
-        //     Renderer::RenderObject(map[i]);
-        // }
-
-        glm::vec3 angles = glm::eulerAngles(glm::quat());
-        //angles.x = rotation;
-        object->SetRotation(glm::quat(angles));
-        Renderer::RenderObject(object);
+        object->transform = glm::scale(object->transform, glm::vec3(glfwGetTime()/10.0));
+        
+        for (size_t x = 0; x < MAPX; x++)
+        {
+            for (size_t y = 0; y < MAPY; y++)
+            {
+                for (size_t z = 0; z < MAPZ; z++)
+                {
+                    Renderer::RenderObject(map[x][y][z]);
+                }
+            }
+        }
+        
+        //Renderer::RenderObject(object);
         glfwSwapBuffers(window);
         glfwPollEvents();    
     }

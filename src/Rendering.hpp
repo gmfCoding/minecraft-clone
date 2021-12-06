@@ -1,16 +1,16 @@
 #pragma once
-
 #include <map>
 #include <string>
 #include <glad.h>
 #include "fileio.hpp"
+
 #include "Mesh.hpp"
+#include "Camera.hpp"
 
 class Object;
 
 struct MeshRenderer
 {
-
     GLuint vao;
     GLsizei size;
     Mesh* mesh;
@@ -36,10 +36,11 @@ class Shader {
     GLuint shaderProgram;
 };
 
-
 class Renderer {
     public:
     static std::map<std::string, Shader> shaders;
+
+    static Camera* camera;
 
     static void CreateProgram(const std::string& name, const std::string& vertexPath, const std::string&  fragmentPath);
     static void DebugShaderInfo(GLuint shader);

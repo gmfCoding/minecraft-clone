@@ -1,7 +1,11 @@
 #pragma once
 #include <glm/gtc/quaternion.hpp>
 #include <string>
-#include "Rendering.hpp"
+
+class MeshRenderer;
+class Shader;
+class Mesh;
+
 
 #define OBJ_DIRTYMATRIX 0x0
 #define OBJ_SETDIRTY flags |= Object::Flags::DirtyMat;
@@ -11,6 +15,8 @@ class Object {
 public:
     char* name;
     Mesh* mesh;
+
+    glm::vec4 colour;
 
     enum Flags {
         DirtyMat    = 0b00000001,
@@ -53,6 +59,4 @@ private:
     glm::vec3 position;
     glm::vec3 scale;
     glm::quat rotation;
-
-
 };
