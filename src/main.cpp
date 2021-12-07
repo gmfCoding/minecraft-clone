@@ -11,13 +11,12 @@
 #include "Camera.hpp"
 #include "Rendering.hpp"
 #include "gldebug.hpp"
-
+#include "World.h"
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {
     glViewport(0, 0, width, height);
 }
-
 
 Object* GenerateExample()
 {
@@ -35,9 +34,40 @@ Object* GenerateExample()
     return object;
 }
 
-void GLAPIENTRY MessageCallback( GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam )
+Mesh* GenerateCubeMesh()
 {
-    fprintf( stderr, "GL CALLBACK: %s type = 0x%x, severity = 0x%x, message = %s\n",( type == GL_DEBUG_TYPE_ERROR ? "** GL ERROR **" : "" ), type, severity, message );
+    Mesh* mesh = new Mesh();
+
+    glm::vec3 vertices[] = {
+        glm::vec3(0, 0, 0),
+        glm::vec3(1, 0, 0),
+        glm::vec3(1, 1, 0),
+        glm::vec3(0, 1, 0),
+        glm::vec3(0, 1, 1),
+        glm::vec3(1, 1, 1),
+        glm::vec3(1, 0, 1),
+        glm::vec3(0, 0, 1),
+    };
+
+    unsigned short indices[] = {
+        0, 2, 1, //face front
+        0, 3, 2,
+        2, 3, 4, //face top
+        2, 4, 5,
+        1, 2, 5, //face right
+        1, 5, 6,
+        0, 7, 4, //face left
+        0, 4, 3,
+        5, 4, 7, //face back
+        5, 7, 6,
+        0, 6, 7, //face bottom
+        0, 1, 6
+    };
+
+    mesh->vertices = std::vector<glm::vec3>(vertices, vertices + 8);
+    mesh->indices = std::vector<unsigned short>(indices, indices + 36);
+
+    return mesh;
 }
 
 int main() {
@@ -69,36 +99,8 @@ int main() {
     camera->projection = projectionMatrix;
     camera->view = cameraMatrix;
 
-    Mesh* mesh = new Mesh();
 
-        glm::vec3 vertices[] = {
-        glm::vec3(0, 0, 0),
-        glm::vec3(1, 0, 0),
-        glm::vec3(1, 1, 0),
-        glm::vec3(0, 1, 0),
-        glm::vec3(0, 1, 1),
-        glm::vec3(1, 1, 1),
-        glm::vec3(1, 0, 1),
-        glm::vec3(0, 0, 1),
-    };
-
-    unsigned short indices[] = {
-        0, 2, 1, //face front
-        0, 3, 2,
-        2, 3, 4, //face top
-        2, 4, 5,
-        1, 2, 5, //face right
-        1, 5, 6,
-        0, 7, 4, //face left
-        0, 4, 3,
-        5, 4, 7, //face back
-        5, 7, 6,
-        0, 6, 7, //face bottom
-        0, 1, 6
-    };
-    
-    mesh->vertices = std::vector<glm::vec3>(vertices, vertices + 8);
-    mesh->indices = std::vector<unsigned short>(indices, indices + 36);
+    Mesh* mesh = GenerateCubeMesh();
 
     const std::string defMat = "default";
     Object* object = new Object();
@@ -141,27 +143,35 @@ int main() {
     //renderer->Bind(mesh);
     //object->renderer = renderer;
     
+
+
+
     Object* secondary = GenerateExample();
 #define MAPX 6
 #define MAPY 2
 #define MAPZ 5
-#define INDEX(x,y,z) x + MAPY * (y + MAPZ * z)
-    Object* map[MAPX][MAPY][MAPZ];
-#define PLACE(x,y,z,b) map[x][y][z]->colour = b * (90.1f + (rand() % 11)) / 100.0f; tmppos = glm::vec3(x, y, z); map[x][y][z]->SetPosition(tmppos);
 
-    int m = 0;
-    for (size_t x = 0; x < MAPX; x++)
-    {
-        for (size_t y = 0; y < MAPY; y++)
-        {
-            for (size_t z = 0; z < MAPZ; z++)
-            {
-                map[x][y][z] = new Object();
-                map[x][y][z]->renderer = object->renderer;
-                m++;
-            }
-        }
-    }
+// #define INDEX(x,y,z) x + MAPY * (y + MAPZ * z)
+//     Object* map[MAPX][MAPY][MAPZ];
+// #define PLACE(x,y,z,b) map[x][y][z]->colour = b * (90.1f + (rand() % 11)) / 100.0f; tmppos = glm::vec3(x, y, z); map[x][y][z]->SetPosition(tmppos);
+
+//     int m = 0;
+//     for (size_t x = 0; x < MAPX; x++)
+//     {
+//         for (size_t y = 0; y < MAPY; y++)
+//         {
+//             for (size_t z = 0; z < MAPZ; z++)
+//             {
+//                 map[x][y][z] = new Object();
+//                 map[x][y][z]->renderer = object->renderer;
+//                 m++;
+//             }
+//         }
+//     }
+
+    World* notWorld = World::LoadWorld("world-imports/waterthing.json", object);
+
+    World* world = new World(MAPX, MAPY, MAPZ, object);
 
     auto sand = glm::vec4(241, 228, 175, 1.0) * (1.0F/255.0F);
     auto water = glm::vec4(25, 58, 145, 1.0) * (1.0F/255.0F);
@@ -169,47 +179,46 @@ int main() {
     
     glm::vec3 tmppos(0,0,0);
     //Grass
-    PLACE(0,0,0,grass);
-    PLACE(1,0,0,grass);
-    PLACE(2,0,0,grass);
-    PLACE(3,0,0,grass);
-
-    PLACE(0,0,1,grass);
-    PLACE(1,0,1,grass);
-    PLACE(2,0,1,grass);
-    PLACE(0,0,2,grass);
-    PLACE(1,0,2,grass);
-
-    PLACE(0,1,0,grass*0.9f);
-    PLACE(1,1,0,grass*0.9f);
-    PLACE(2,1,0,grass*0.9f);
-    PLACE(0,1,1,grass*0.9f);
-    PLACE(1,1,1,grass*0.9f);
-
-    PLACE(4,0,0,sand);
-    PLACE(3,0,1,sand);
-    PLACE(2,0,2,sand);
-    PLACE(3,0,2,sand);
-    PLACE(1,0,3,sand);
-    PLACE(0,0,3,sand);
-
-    PLACE(5,0,0, water);
-    PLACE(5,0,1, water);
-    PLACE(4,0,1, water);
-    PLACE(5,0,2, water);
-    PLACE(5,0,2, water);
-    PLACE(4,0,2, water);
-    PLACE(5,0,3, water);
-    PLACE(4,0,3, water);
-    PLACE(3,0,3, water);
-    PLACE(2,0,3, water);
-    PLACE(5,0,4, water);
-    PLACE(4,0,4, water);
-    PLACE(3,0,4, water);
-    PLACE(2,0,4, water);
-    PLACE(1,0,4, water);
-    PLACE(0,0,4, water);
-
+    world->Place(0,0,0, grass);
+    world->Place(1,0,0, grass);
+    world->Place(2,0,0, grass);
+    world->Place(3,0,0, grass);
+ 
+    world->Place(0,0,1, grass);
+    world->Place(1,0,1, grass);
+    world->Place(2,0,1, grass);
+    world->Place(0,0,2, grass);
+    world->Place(1,0,2, grass);
+ 
+    world->Place(0,1,0, grass);
+    world->Place(1,1,0, grass);
+    world->Place(2,1,0, grass);
+    world->Place(0,1,1, grass);
+    world->Place(1,1,1, grass);
+ 
+    world->Place(4,0,0, sand);
+    world->Place(3,0,1, sand);
+    world->Place(2,0,2, sand);
+    world->Place(3,0,2, sand);
+    world->Place(1,0,3, sand);
+    world->Place(0,0,3, sand);
+ 
+    world->Place(5,0,0, water);
+    world->Place(5,0,1, water);
+    world->Place(4,0,1, water);
+    world->Place(5,0,2, water);
+    world->Place(5,0,2, water);
+    world->Place(4,0,2, water);
+    world->Place(5,0,3, water);
+    world->Place(4,0,3, water);
+    world->Place(3,0,3, water);
+    world->Place(2,0,3, water);
+    world->Place(5,0,4, water);
+    world->Place(4,0,4, water);
+    world->Place(3,0,4, water);
+    world->Place(2,0,4, water);
+    world->Place(1,0,4, water);
+    world->Place(0,0,4, water);
     
     glm::mat4 mat4id = glm::mat4(1.0);
     *object->PtrTransform() = glm::translate(mat4id, glm::vec3(0.0f,0.0f,0.5f));
@@ -220,16 +229,18 @@ int main() {
 
         object->transform = glm::scale(object->transform, glm::vec3(glfwGetTime()/10.0));
         
-        for (size_t x = 0; x < MAPX; x++)
-        {
-            for (size_t y = 0; y < MAPY; y++)
-            {
-                for (size_t z = 0; z < MAPZ; z++)
-                {
-                    Renderer::RenderObject(map[x][y][z]);
-                }
-            }
-        }
+        notWorld->Render();
+
+        // for (size_t x = 0; x < MAPX; x++)
+        // {
+        //     for (size_t y = 0; y < MAPY; y++)
+        //     {
+        //         for (size_t z = 0; z < MAPZ; z++)
+        //         {
+        //             Renderer::RenderObject(map[x][y][z]);
+        //         }
+        //     }
+        // }
         
         //Renderer::RenderObject(object);
         glfwSwapBuffers(window);

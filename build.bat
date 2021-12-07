@@ -5,6 +5,7 @@ set multiLine=-g^
  %~dp0bintmp\glad.o^
  %~dp0bintmp\fileio.o^
  -I%~dp0include^
+ -I%~dp0include\nlohmann^
  -I%~dp0include\glad^
  -I%~dp0include\other^
  -L%~dp0lib^
