@@ -55,7 +55,7 @@ public:
     Object();
     glm::mat4 transform;
     
-private:
+protected:
     glm::vec3 position;
     glm::vec3 scale;
     glm::quat rotation;

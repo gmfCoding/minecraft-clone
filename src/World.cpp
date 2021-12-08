@@ -57,6 +57,7 @@ struct VoxelData {
     int z;
     int pallet;
 };
+
 class Object;
 
 World* World::LoadWorld(const char* path, Object *object)

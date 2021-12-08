@@ -13,6 +13,8 @@
 #include "gldebug.hpp"
 #include "World.h"
 
+#include <glm/gtx/string_cast.hpp>
+
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {
     glViewport(0, 0, width, height);
@@ -70,12 +72,70 @@ Mesh* GenerateCubeMesh()
     return mesh;
 }
 
-int main() {
+struct PlayerMove
+{
+    bool Left;
+    bool Right;
+    bool Forward;
+    bool Backwards;
+    bool Down;
+    bool Up;
+};
 
-    std::cout << "Am I working?" << std::endl;
-    Camera* camera = new Camera();
+PlayerMove playerMove{};
+
+#define KEYPRESS(keyId) key == GLFW_KEY_##keyId && action = GLFW_PRESS
+#define KEYRELEASE(keyId) key == GLFW_KEY_##keyId && action = GLFW_RELEASE
+#define KEYCONTROL(keyId, bvar) if(key == GLFW_KEY_##keyId) { if (action == GLFW_PRESS) {bvar = true;}else{bvar = false;}}  \
+
+// class InputAction {
+//     int key;
+
+// }
+
+void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
+{
+    //KEYCONTROL(A,playerMove.Left)
+    if(key == GLFW_KEY_A)
+    { 
+        if (action == GLFW_PRESS) 
+        {playerMove.Left = true;}
+        else{playerMove.Left = false;}
+    }
+    KEYCONTROL(S,playerMove.Backwards)
+    KEYCONTROL(D,playerMove.Right)
+    KEYCONTROL(W,playerMove.Forward)
+    KEYCONTROL(Q,playerMove.Down)
+    KEYCONTROL(E,playerMove.Up)
+}
+
+void ControlCamera(PlayerMove move, Camera* camera)
+{
+    glm::vec3* pos = camera->PtrPosition();
+
+    glm::vec3 cameraDirection = glm::normalize(*pos - glm::vec3(0.0f));
+    glm::vec3 cameraLeft = -glm::normalize(glm::cross(glm::vec3(0,1,0), cameraDirection));
+    glm::vec3 cameraUp = glm::cross(cameraDirection, -cameraLeft);
+
+    if(move.Left) {
+        *pos = *pos + cameraLeft;}
+    if(move.Right) {*pos = *pos - cameraLeft;}
+    if(move.Forward) {*pos = *pos + cameraDirection;}
+    if(move.Backwards) {*pos = *pos - cameraDirection;}
+
+    if(move.Up) {*pos = *pos + cameraUp;}
+    if(move.Down) {*pos = *pos - cameraUp;}
+
+    camera->UpdateView();
+}
+
+int main() {
+    Camera* camera = new Camera(70.0f, 4.0f / 3.0f, 0.1f, 100.0f);
     Renderer::camera = camera;
-    glm::vec3 cameraPos = glm::vec3(6.0f,3.5f,7.0f);
+    camera->SetPosition(glm::vec3(6.0f,3.5f,7.0f)*2.0f);
+    camera->UpdateView();
+
+    glm::vec3 cameraPos = glm::vec3(6.0f,3.5f,7.0f)*2.0f;
     glm::vec3 cameraTarget = glm::vec3(0.0f, 0.0f, 0.0f);
     // glm::vec3 cameraDirection = glm::normalize(cameraPos - cameraTarget);
     glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
@@ -88,17 +148,9 @@ int main() {
         up        // probably glm::vec3(0,1,0), but (0,-1,0) would make you looking upside-down, which can be great too
     );
 
-    glm::mat4 projectionMatrix = glm::perspective(
-        glm::radians(70.0f), // The vertical Field of View, in radians: the amount of "zoom". Think "camera lens". Usually between 90° (extra wide) and 30° (quite zoomed in)
-        4.0f / 3.0f,       // Aspect Ratio. Depends on the size of your window. Notice that 4/3 == 800/600 == 1280/960, sounds familiar ?
-        0.1f,              // Near clipping plane. Keep as big as possible, or you'll get precision issues.
-        100.0f             // Far clipping plane. Keep as little as possible.
-    );
+    std::cout << glm::to_string(camera->view) << std::endl;
 
-    camera->SetPosition(cameraPos);
-    camera->projection = projectionMatrix;
-    camera->view = cameraMatrix;
-
+    std::cout << glm::to_string(cameraMatrix) << std::endl;
 
     Mesh* mesh = GenerateCubeMesh();
 
@@ -122,6 +174,9 @@ int main() {
         std::cout << "Failed to initialize GLAD" << std::endl;
         return -1;
     }
+
+    glfwSetKeyCallback(window, key_callback);
+
     glEnable(GL_DEPTH_TEST);  
     glEnable(GL_CULL_FACE); 
     glViewport(0, 0, 800, 600);
@@ -142,88 +197,17 @@ int main() {
 
     //renderer->Bind(mesh);
     //object->renderer = renderer;
-    
-
-
-
     Object* secondary = GenerateExample();
-#define MAPX 6
-#define MAPY 2
-#define MAPZ 5
 
-// #define INDEX(x,y,z) x + MAPY * (y + MAPZ * z)
-//     Object* map[MAPX][MAPY][MAPZ];
-// #define PLACE(x,y,z,b) map[x][y][z]->colour = b * (90.1f + (rand() % 11)) / 100.0f; tmppos = glm::vec3(x, y, z); map[x][y][z]->SetPosition(tmppos);
+    //World* notWorld = World::LoadWorld("world-imports/waterthing.json", object);
+    World* notWorld = World::LoadWorld("world-imports/grasswater.json", object);
 
-//     int m = 0;
-//     for (size_t x = 0; x < MAPX; x++)
-//     {
-//         for (size_t y = 0; y < MAPY; y++)
-//         {
-//             for (size_t z = 0; z < MAPZ; z++)
-//             {
-//                 map[x][y][z] = new Object();
-//                 map[x][y][z]->renderer = object->renderer;
-//                 m++;
-//             }
-//         }
-//     }
-
-    World* notWorld = World::LoadWorld("world-imports/waterthing.json", object);
-
-    World* world = new World(MAPX, MAPY, MAPZ, object);
-
-    auto sand = glm::vec4(241, 228, 175, 1.0) * (1.0F/255.0F);
-    auto water = glm::vec4(25, 58, 145, 1.0) * (1.0F/255.0F);
-    auto grass = glm::vec4(22, 158, 38, 1.0) * (1.0F/255.0F);
-    
-    glm::vec3 tmppos(0,0,0);
-    //Grass
-    world->Place(0,0,0, grass);
-    world->Place(1,0,0, grass);
-    world->Place(2,0,0, grass);
-    world->Place(3,0,0, grass);
- 
-    world->Place(0,0,1, grass);
-    world->Place(1,0,1, grass);
-    world->Place(2,0,1, grass);
-    world->Place(0,0,2, grass);
-    world->Place(1,0,2, grass);
- 
-    world->Place(0,1,0, grass);
-    world->Place(1,1,0, grass);
-    world->Place(2,1,0, grass);
-    world->Place(0,1,1, grass);
-    world->Place(1,1,1, grass);
- 
-    world->Place(4,0,0, sand);
-    world->Place(3,0,1, sand);
-    world->Place(2,0,2, sand);
-    world->Place(3,0,2, sand);
-    world->Place(1,0,3, sand);
-    world->Place(0,0,3, sand);
- 
-    world->Place(5,0,0, water);
-    world->Place(5,0,1, water);
-    world->Place(4,0,1, water);
-    world->Place(5,0,2, water);
-    world->Place(5,0,2, water);
-    world->Place(4,0,2, water);
-    world->Place(5,0,3, water);
-    world->Place(4,0,3, water);
-    world->Place(3,0,3, water);
-    world->Place(2,0,3, water);
-    world->Place(5,0,4, water);
-    world->Place(4,0,4, water);
-    world->Place(3,0,4, water);
-    world->Place(2,0,4, water);
-    world->Place(1,0,4, water);
-    world->Place(0,0,4, water);
-    
     glm::mat4 mat4id = glm::mat4(1.0);
     *object->PtrTransform() = glm::translate(mat4id, glm::vec3(0.0f,0.0f,0.5f));
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
     while(!glfwWindowShouldClose(window)) {
+
+        ControlCamera(playerMove, camera);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         float rotation = glfwGetTime();
 
