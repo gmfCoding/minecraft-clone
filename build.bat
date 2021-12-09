@@ -1,4 +1,4 @@
-@echo on
+@echo off
 set multiLine=-g^
  %~dp0src\*.cpp^
  -o%~dp0bin\main.exe^

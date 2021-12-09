@@ -1,40 +1,19 @@
 #include <iostream>
-#include "glad.h"
-#include "GL/gl.h"
-#include <GLFW/glfw3.h>  
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/transform.hpp>
 #include <vector>
+
 #include "Mesh.hpp"
 #include "Object.hpp"
 #include "Camera.hpp"
 #include "Rendering.hpp"
 #include "gldebug.hpp"
 #include "World.h"
+#include "engine.h"
+#include "PlayerMove.h"
 
 #include <glm/gtx/string_cast.hpp>
-
-void framebuffer_size_callback(GLFWwindow* window, int width, int height)
-{
-    glViewport(0, 0, width, height);
-}
-
-Object* GenerateExample()
-{
-    Mesh* mesh = new Mesh();
-    mesh->vertices.push_back({ 0.5f,  0.5f, 0.0f});
-    mesh->indices.push_back(0);
-    mesh->vertices.push_back({-0.5f,  0.5f, 0.0f});
-    mesh->indices.push_back(1);
-    mesh->vertices.push_back({-0.5f, -0.5f, 0.0f});
-    mesh->indices.push_back(2);
-    Object* object = new Object();
-    object->renderer = new MeshRenderer("default");
-    object->renderer->Bind(mesh);
-    *(object->PtrPosition()) = {0.0f, 0.0f, 0.0f};
-    return object;
-}
 
 Mesh* GenerateCubeMesh()
 {
@@ -72,183 +51,68 @@ Mesh* GenerateCubeMesh()
     return mesh;
 }
 
-struct PlayerMove
-{
-    bool Left;
-    bool Right;
-    bool Forward;
-    bool Backwards;
-    bool Down;
-    bool Up;
-};
+class Mineclone : public Engine {
 
-PlayerMove playerMove{};
+    PlayerMove playerMove{};
+    Camera* camera;
 
-// class InputAction {
-//     int key;
+    World* world;
+    Object* object;
 
-// }
+    void Start() override {
+        Engine::Start();
+        camera = new Camera(70.0f, 4.0f / 3.0f, 0.1f, 100.0f);
+        Renderer::camera = camera;
+        camera->SetPosition(glm::vec3(6.0f,3.5f,7.0f)*2.0f);
+        camera->UpdateView();
 
-enum KeyMode{
-    Release,
-    Press,
-    Hold,
-    None
-};
+        glm::vec3 cameraPos = glm::vec3(6.0f,3.5f,7.0f)*2.0f;
+        glm::vec3 cameraTarget = glm::vec3(0.0f, 0.0f, 0.0f);
+        // glm::vec3 cameraDirection = glm::normalize(cameraPos - cameraTarget);
+        glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
+        // glm::vec3 cameraRight = glm::normalize(glm::cross(up, cameraDirection));
+        // glm::vec3 cameraUp = glm::cross(cameraDirection, cameraRight);
 
-#define RECKEY_COUNT 120
-KeyMode _keyStateBuffer1[RECKEY_COUNT] = {KeyMode::None};
-KeyMode _keyStateBuffer2[RECKEY_COUNT] = {KeyMode::None};
+        glm::mat4 cameraMatrix = glm::lookAt(
+            cameraPos, // the position of your camera, in world space
+            cameraTarget,   // where you want to look at, in world space
+            up        // probably glm::vec3(0,1,0), but (0,-1,0) would make you looking upside-down, which can be great too
+        );
 
-KeyMode* keyStateCurrent;
-KeyMode* keyStatePrevious;
-bool onKeyUpdate;
+        Mesh* mesh = GenerateCubeMesh();
 
-void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
-{
-    onKeyUpdate = true;
-    if(action == GLFW_PRESS)
-        keyStateCurrent[key] = KeyMode::Press;
+        const std::string defMat = "default";
+        object = new Object();
 
-    if(action == GLFW_RELEASE)
-        keyStateCurrent[key] = KeyMode::Release;
-}
+        // Object* object = new Object("default", mesh);
+        // object->renderer = new MeshRenderer("default");
+        // object->renderer->Bind(mesh);
+        // object->position = {0.0f,0.0f,0.0f};
 
-void ControlCamera(PlayerMove move, Camera* camera)
-{
-    keyStateCurrent = &_keyStateBuffer1[0];
-    keyStatePrevious = &_keyStateBuffer2[0];
+        object->renderer = new MeshRenderer("default");
+        object->renderer->Bind(mesh);
 
-    glm::vec3* pos = camera->PtrPosition();
+        //renderer->Bind(mesh);
+        //object->renderer = renderer;
+        //world = World::LoadWorld("world-imports/waterthing.json", object);
+        //world = World::LoadWorld("world-imports/grasswater.json", object);
+        world = World::LoadWorld("world-imports/desolateisland.json", object);
 
-    glm::vec3 cameraDirection = glm::normalize(*pos - glm::vec3(0.0f));
-    glm::vec3 cameraLeft = -glm::normalize(glm::cross(glm::vec3(0,1,0), cameraDirection));
-    glm::vec3 cameraUp = glm::cross(cameraDirection, -cameraLeft);
-
-    if(move.Left) {
-        *pos = *pos + cameraLeft;}
-    if(move.Right) {*pos = *pos - cameraLeft;}
-    if(move.Forward) {*pos = *pos + cameraDirection;}
-    if(move.Backwards) {*pos = *pos - cameraDirection;}
-
-    if(move.Up) {*pos = *pos + cameraUp;}
-    if(move.Down) {*pos = *pos - cameraUp;}
-
-    camera->UpdateView();
-}
-
-int main() {
-    Camera* camera = new Camera(70.0f, 4.0f / 3.0f, 0.1f, 100.0f);
-    Renderer::camera = camera;
-    camera->SetPosition(glm::vec3(6.0f,3.5f,7.0f)*2.0f);
-    camera->UpdateView();
-
-    glm::vec3 cameraPos = glm::vec3(6.0f,3.5f,7.0f)*2.0f;
-    glm::vec3 cameraTarget = glm::vec3(0.0f, 0.0f, 0.0f);
-    // glm::vec3 cameraDirection = glm::normalize(cameraPos - cameraTarget);
-    glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
-    // glm::vec3 cameraRight = glm::normalize(glm::cross(up, cameraDirection));
-    // glm::vec3 cameraUp = glm::cross(cameraDirection, cameraRight);
-
-    glm::mat4 cameraMatrix = glm::lookAt(
-        cameraPos, // the position of your camera, in world space
-        cameraTarget,   // where you want to look at, in world space
-        up        // probably glm::vec3(0,1,0), but (0,-1,0) would make you looking upside-down, which can be great too
-    );
-
-    std::cout << glm::to_string(camera->view) << std::endl;
-
-    std::cout << glm::to_string(cameraMatrix) << std::endl;
-
-    Mesh* mesh = GenerateCubeMesh();
-
-    const std::string defMat = "default";
-    Object* object = new Object();
-
-    glfwInit();
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
-    //glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-    GLFWwindow* window = glfwCreateWindow(800, 600, "LearnOpenGL", NULL, NULL);
-    if (window == NULL) {
-            std::cout << "Failed to create GLFW window" << std::endl;
-            glfwTerminate();
-            return -1;
-    }
-    glfwMakeContextCurrent(window);
-    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
-        std::cout << "Failed to initialize GLAD" << std::endl;
-        return -1;
+        glm::mat4 mat4id = glm::mat4(1.0);
+        *object->PtrTransform() = glm::translate(mat4id, glm::vec3(0.0f,0.0f,0.5f));
     }
 
-    glfwSetKeyCallback(window, key_callback);
-
-    glEnable(GL_DEPTH_TEST);  
-    glEnable(GL_CULL_FACE); 
-    glViewport(0, 0, 800, 600);
-    // During init, enable debug output
-    glEnable(GL_DEBUG_OUTPUT);
-    // glDebugMessageCallback( MessageCallback, nullptr);
-
-    Renderer::CreateProgram("default", "./shaders/vertex.shader", "./shaders/fragment.shader");
-
-
-    // Object* object = new Object("default", mesh);
-    // object->renderer = new MeshRenderer("default");
-    // object->renderer->Bind(mesh);
-    // object->position = {0.0f,0.0f,0.0f};
-
-    object->renderer = new MeshRenderer("default");
-    object->renderer->Bind(mesh);
-
-    //renderer->Bind(mesh);
-    //object->renderer = renderer;
-    Object* secondary = GenerateExample();
-
-    //World* notWorld = World::LoadWorld("world-imports/waterthing.json", object);
-    // World* notWorld = World::LoadWorld("world-imports/grasswater.json", object);
-    World* notWorld = World::LoadWorld("world-imports/desolateisland.json", object);
-
-    glm::mat4 mat4id = glm::mat4(1.0);
-    *object->PtrTransform() = glm::translate(mat4id, glm::vec3(0.0f,0.0f,0.5f));
-    glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
-    while(!glfwWindowShouldClose(window)) {
-
-        if(onKeyUpdate)
-        {
-#define KEYCONTROL(keyId, bvar) if(keyStateCurrent[GLFW_KEY_##keyId] == KeyMode::Press || keyStateCurrent[GLFW_KEY_##keyId] == KeyMode::Hold) { bvar = true;} else{bvar = false;}
-            KEYCONTROL(A,playerMove.Left)
-            KEYCONTROL(S,playerMove.Backwards)
-            KEYCONTROL(D,playerMove.Right)
-            KEYCONTROL(W,playerMove.Forward)
-            KEYCONTROL(Q,playerMove.Down)
-            KEYCONTROL(E,playerMove.Up)
-        }
-
-        ControlCamera(playerMove, camera);
+    void Update() override {
+        Input();
+        camera->Control(playerMove);
         glClearColor(235/255, 171/255, 87/255, 1.0);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        
         float rotation = glfwGetTime();
 
         object->transform = glm::scale(object->transform, glm::vec3(glfwGetTime()/10.0));
         
-        notWorld->Render();
+        world->Render();
 
-        // for (size_t x = 0; x < MAPX; x++)
-        // {
-        //     for (size_t y = 0; y < MAPY; y++)
-        //     {
-        //         for (size_t z = 0; z < MAPZ; z++)
-        //         {
-        //             Renderer::RenderObject(map[x][y][z]);
-        //         }
-        //     }
-        // }
-        
-        //Renderer::RenderObject(object);
         glfwSwapBuffers(window);
 
         KeyMode* tmp = keyStateCurrent;
@@ -266,6 +130,25 @@ int main() {
         keyStatePrevious = keyStateCurrent;
         glfwPollEvents();    
     }
-    glfwTerminate();
-    return 0;
+
+    void Input()
+    {
+        if(onKeyUpdate)
+        {
+#define KEYCONTROL(keyId, bvar) if(keyStateCurrent[GLFW_KEY_##keyId] == KeyMode::Press || keyStateCurrent[GLFW_KEY_##keyId] == KeyMode::Hold) { bvar = true;} else{bvar = false;}
+            KEYCONTROL(A,playerMove.Left)
+            KEYCONTROL(S,playerMove.Backwards)
+            KEYCONTROL(D,playerMove.Right)
+            KEYCONTROL(W,playerMove.Forward)
+            KEYCONTROL(Q,playerMove.Down)
+            KEYCONTROL(E,playerMove.Up)
+        }
+    }
+};
+
+
+
+int main() {
+    Mineclone engine = Mineclone();
+    return engine.Intialise();
 }

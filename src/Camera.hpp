@@ -1,5 +1,6 @@
 #pragma once
 #include "Object.hpp"
+#include "PlayerMove.h"
 
 class Camera : public Object
 {   
@@ -10,4 +11,6 @@ public:
     Camera(float fov, float aspect, float near, float far);
 
     void UpdateView();
+
+    void Control(PlayerMove move);
 };

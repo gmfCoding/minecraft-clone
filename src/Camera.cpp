@@ -1,7 +1,7 @@
 #include <glm/vec3.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include "Camera.hpp"
-
+#include "PlayerMove.h"
 
 Camera::Camera(float fov, float aspect, float near, float far)
 {
@@ -27,4 +27,25 @@ void Camera::UpdateView()
         cameraTarget,
         up
     );
+}
+
+
+void Camera::Control(PlayerMove move)
+{   
+    glm::vec3* pos = PtrPosition();
+
+    glm::vec3 cameraDirection = glm::normalize(*pos - glm::vec3(0.0f));
+    glm::vec3 cameraLeft = -glm::normalize(glm::cross(glm::vec3(0,1,0), cameraDirection));
+    glm::vec3 cameraUp = glm::cross(cameraDirection, -cameraLeft);
+
+    if(move.Left) {
+        *pos = *pos + cameraLeft;}
+    if(move.Right) {*pos = *pos - cameraLeft;}
+    if(move.Forward) {*pos = *pos + cameraDirection;}
+    if(move.Backwards) {*pos = *pos - cameraDirection;}
+
+    if(move.Up) {*pos = *pos + cameraUp;}
+    if(move.Down) {*pos = *pos - cameraUp;}
+
+    UpdateView();
 }
