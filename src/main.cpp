@@ -84,33 +84,41 @@ struct PlayerMove
 
 PlayerMove playerMove{};
 
-#define KEYPRESS(keyId) key == GLFW_KEY_##keyId && action = GLFW_PRESS
-#define KEYRELEASE(keyId) key == GLFW_KEY_##keyId && action = GLFW_RELEASE
-#define KEYCONTROL(keyId, bvar) if(key == GLFW_KEY_##keyId) { if (action == GLFW_PRESS) {bvar = true;}else{bvar = false;}}  \
-
 // class InputAction {
 //     int key;
 
 // }
 
+enum KeyMode{
+    Release,
+    Press,
+    Hold,
+    None
+};
+
+#define RECKEY_COUNT 120
+KeyMode _keyStateBuffer1[RECKEY_COUNT] = {KeyMode::None};
+KeyMode _keyStateBuffer2[RECKEY_COUNT] = {KeyMode::None};
+
+KeyMode* keyStateCurrent;
+KeyMode* keyStatePrevious;
+bool onKeyUpdate;
+
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
-    //KEYCONTROL(A,playerMove.Left)
-    if(key == GLFW_KEY_A)
-    { 
-        if (action == GLFW_PRESS) 
-        {playerMove.Left = true;}
-        else{playerMove.Left = false;}
-    }
-    KEYCONTROL(S,playerMove.Backwards)
-    KEYCONTROL(D,playerMove.Right)
-    KEYCONTROL(W,playerMove.Forward)
-    KEYCONTROL(Q,playerMove.Down)
-    KEYCONTROL(E,playerMove.Up)
+    onKeyUpdate = true;
+    if(action == GLFW_PRESS)
+        keyStateCurrent[key] = KeyMode::Press;
+
+    if(action == GLFW_RELEASE)
+        keyStateCurrent[key] = KeyMode::Release;
 }
 
 void ControlCamera(PlayerMove move, Camera* camera)
 {
+    keyStateCurrent = &_keyStateBuffer1[0];
+    keyStatePrevious = &_keyStateBuffer2[0];
+
     glm::vec3* pos = camera->PtrPosition();
 
     glm::vec3 cameraDirection = glm::normalize(*pos - glm::vec3(0.0f));
@@ -200,15 +208,29 @@ int main() {
     Object* secondary = GenerateExample();
 
     //World* notWorld = World::LoadWorld("world-imports/waterthing.json", object);
-    World* notWorld = World::LoadWorld("world-imports/grasswater.json", object);
+    // World* notWorld = World::LoadWorld("world-imports/grasswater.json", object);
+    World* notWorld = World::LoadWorld("world-imports/desolateisland.json", object);
 
     glm::mat4 mat4id = glm::mat4(1.0);
     *object->PtrTransform() = glm::translate(mat4id, glm::vec3(0.0f,0.0f,0.5f));
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
     while(!glfwWindowShouldClose(window)) {
 
+        if(onKeyUpdate)
+        {
+#define KEYCONTROL(keyId, bvar) if(keyStateCurrent[GLFW_KEY_##keyId] == KeyMode::Press || keyStateCurrent[GLFW_KEY_##keyId] == KeyMode::Hold) { bvar = true;} else{bvar = false;}
+            KEYCONTROL(A,playerMove.Left)
+            KEYCONTROL(S,playerMove.Backwards)
+            KEYCONTROL(D,playerMove.Right)
+            KEYCONTROL(W,playerMove.Forward)
+            KEYCONTROL(Q,playerMove.Down)
+            KEYCONTROL(E,playerMove.Up)
+        }
+
         ControlCamera(playerMove, camera);
+        glClearColor(235/255, 171/255, 87/255, 1.0);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        
         float rotation = glfwGetTime();
 
         object->transform = glm::scale(object->transform, glm::vec3(glfwGetTime()/10.0));
@@ -228,9 +250,22 @@ int main() {
         
         //Renderer::RenderObject(object);
         glfwSwapBuffers(window);
+
+        KeyMode* tmp = keyStateCurrent;
+        // switch buffers
+        keyStateCurrent = keyStatePrevious;
+        for (size_t i = 0; i < RECKEY_COUNT; i++)
+        {
+            if (keyStateCurrent[i] == KeyMode::Press)
+            { keyStateCurrent[i] == KeyMode::Hold; continue; }
+
+            keyStateCurrent[i] == KeyMode::None;
+        }
+        
+        
+        keyStatePrevious = keyStateCurrent;
         glfwPollEvents();    
     }
     glfwTerminate();
     return 0;
 }
-
