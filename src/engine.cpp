@@ -80,9 +80,19 @@ int Engine::Intialise()
     glEnable(GL_DEBUG_OUTPUT);
     // glDebugMessageCallback( MessageCallback, nullptr);
     this->Start();
-
+    double lasttime = glfwGetTime();
     while(!glfwWindowShouldClose(window)) {
+        deltaTime =  glfwGetTime() - timeLastFrame;
+        timeLastFrame = glfwGetTime();
+        std::cout << 1/deltaTime << std::endl;
         this->Update();
+
+        while (glfwGetTime() < lasttime + 1.0/targetFPS) {
+            // TODO: Put the thread to sleep, yield, or simply do nothing
+        }
+        lasttime += 1.0/targetFPS;
+
+
     }
     glfwTerminate();
     return 0;

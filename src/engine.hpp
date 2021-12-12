@@ -11,6 +11,9 @@ class Engine {
 
 
     GLFWwindow* window;
+    double timeLastFrame;
+    double deltaTime;
+    double targetFPS = 60.0;
 
     enum KeyMode{
         Release,

@@ -64,7 +64,7 @@ class Mineclone : public Engine {
 
     void Start() override {
         Engine::Start();
-
+        targetFPS = 144.0;
         Renderer::CreateProgram("default", "./shaders/vertex.shader", "./shaders/fragment.shader");
         Renderer::CreateProgram("world", "./shaders/world_vert.shader", "./shaders/world_frag.shader");
 
@@ -105,8 +105,6 @@ class Mineclone : public Engine {
         //object->transform = glm::scale(object->transform, glm::vec3(glfwGetTime()/10.0));
         world->Render();
 
-        std::cout << camera->yaw << "," << camera->pitch << std::endl;
-        
         glfwSwapBuffers(window);
 
         KeyMode* tmp = keyStateCurrent;
