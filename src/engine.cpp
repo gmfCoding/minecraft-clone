@@ -1,4 +1,4 @@
-#include "engine.h" 
+#include "engine.hpp" 
 #include "glad.h"
 #include "GL/gl.h"
 #include <iostream>
@@ -6,11 +6,19 @@
 #include "Rendering.hpp"
 #include <GLFW/glfw3.h>
 
+#define def_getcursorposfun
+typedef void (* getcursorposfun)(GLFWwindow*, double*,double*);
 Engine *currentEngine;
 
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
     currentEngine->engine_key_callback(window, key, scancode, action, mods);
 }
+
+void cursorpos_callback(GLFWwindow* window, double x, double y)
+{
+    currentEngine->input.OnMousePosChanged(window, x, y, glfwGetCursorPos);
+}
+
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {
@@ -62,6 +70,8 @@ int Engine::Intialise()
     }
 
     glfwSetKeyCallback(window, key_callback);
+    glfwSetCursorPosCallback(window, cursorpos_callback);  
+    glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
     glEnable(GL_DEPTH_TEST);  
     glEnable(GL_CULL_FACE); 
@@ -71,7 +81,6 @@ int Engine::Intialise()
     // glDebugMessageCallback( MessageCallback, nullptr);
     this->Start();
 
-    glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
     while(!glfwWindowShouldClose(window)) {
         this->Update();
     }

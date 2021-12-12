@@ -1,6 +1,6 @@
 #include <glm/vec3.hpp>
 #include "Rendering.hpp"
-#include "World.h"
+#include "World.hpp"
 #include "nlohmann/json.hpp"
 #include <fstream>
 #include <iostream>
@@ -43,6 +43,7 @@ void World::Render()
     auto program = Renderer::shaders["default"].shaderProgram;
 
     // GLfloat* tFloatPtr = glm::value_ptr(transform);
+    Renderer::camera->UpdateView();
     glm::mat4 mvp = Renderer::camera->projection * Renderer::camera->view * transform;
 #define GLCall(a) a
     GLCall(glUseProgram(program));

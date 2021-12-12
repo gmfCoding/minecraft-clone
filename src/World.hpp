@@ -1,6 +1,4 @@
 #pragma once
-
-
 #include <glm/vec4.hpp>
 
 class Renderer;

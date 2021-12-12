@@ -38,7 +38,7 @@
             "request": "launch",
             "args": [],
             "stopAtEntry": false,
-            "cwd": "${workspaceRoot}",
+            "cwd": "${workspaceRoot}/bin",
             "environment": [],
             "externalConsole": false,
             "MIMode": "gdb",
@@ -64,7 +64,7 @@
             "name": "Launch RenderDoc",
             "type": "cppdbg",
             "request": "launch",
-            "cwd": "${workspaceRoot}",
+            "cwd": "${workspaceRoot}/bin",
             "externalConsole": false,
             "program": "",
             "args": [],
@@ -75,8 +75,10 @@
                 ]
             },
             "linux": {
-                "program": "${workspaceRoot}/main",
-                "miDebuggerPath": "/usr/bin/gdb",
+                "program": "/opt/renderdoc_1.17/bin/qrenderdoc",
+                "args": [
+                    "${workspaceRoot}/bin/main"
+                ]
             },
             "preLaunchTask": "G++: build program"
         },

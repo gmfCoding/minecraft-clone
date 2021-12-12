@@ -3,15 +3,18 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/transform.hpp>
 #include <vector>
+#include <glm/gtx/rotate_vector.hpp>
 
+#include "Input.hpp"
 #include "Mesh.hpp"
 #include "Object.hpp"
 #include "Camera.hpp"
 #include "Rendering.hpp"
 #include "gldebug.hpp"
-#include "World.h"
-#include "engine.h"
-#include "PlayerMove.h"
+#include "World.hpp"
+#include "engine.hpp"
+#include "PlayerMove.hpp"
+#include "PlayerController.hpp"
 
 #include <glm/gtx/string_cast.hpp>
 
@@ -55,9 +58,9 @@ class Mineclone : public Engine {
 
     PlayerMove playerMove{};
     Camera* camera;
-
     World* world;
-    Object* object;
+
+    PlayerController* playerController;
 
     void Start() override {
         Engine::Start();
@@ -68,18 +71,23 @@ class Mineclone : public Engine {
 
         camera = new Camera(70.0f, 4.0f / 3.0f, 0.1f, 100.0f);
         Renderer::camera = camera;
-        camera->SetPosition(glm::vec3(6.0f,3.5f,7.0f)*2.0f);
+        camera->SetPosition(glm::vec3(7.0f,2.0f,7.0f));
         camera->UpdateView();
 
-        Mesh* mesh = GenerateCubeMesh();
+        playerController = new PlayerController();
+        playerController->camera = Renderer::camera;
 
-        object = new Object();
+        // Mesh* mesh = GenerateCubeMesh();
+        // object = new Object();
+        // object->renderer = new MeshRenderer("default");
+        // object->renderer->Bind(mesh);
+        // object->SetPosition(glm::vec3(-10,0,0));
 
-        object->renderer = new MeshRenderer("default");
-        object->renderer->Bind(mesh);
-        object->SetPosition(glm::vec3(-10,0,0));
         world = World::LoadWorld("world-imports/waterthing.json");
-        
+        input.onMouseChangedArr.push_back([this](void* _input){ playerController->OnMouseInput(_input);});
+
+        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED); 
+
         //world = World::LoadWorld("world-imports/single.json");
         //world = World::LoadWorld("world-imports/grasswater.json");
         //world = World::LoadWorld("world-imports/desolateisland.json");
@@ -89,14 +97,15 @@ class Mineclone : public Engine {
 
     void Update() override {
         Input();
-        camera->Control(playerMove);
+        playerController->Control(playerMove);
         glClearColor(235/255, 171/255, 87/255, 1.0);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         float rotation = glfwGetTime();
-        object->colour = glm::vec4(0.3, 0.1, 0.5, 1.0);
-        Renderer::RenderObject(object);
+
         //object->transform = glm::scale(object->transform, glm::vec3(glfwGetTime()/10.0));
         world->Render();
+
+        std::cout << camera->yaw << "," << camera->pitch << std::endl;
         
         glfwSwapBuffers(window);
 
@@ -118,6 +127,8 @@ class Mineclone : public Engine {
 
     void Input()
     {
+        //Renderer::camera->SetRotation(glm::quat(glm::vec3(0, angle, 0)));
+
         if(onKeyUpdate)
         {
 #define KEYCONTROL(keyId, bvar) if(keyStateCurrent[GLFW_KEY_##keyId] == KeyMode::Press || keyStateCurrent[GLFW_KEY_##keyId] == KeyMode::Hold) { bvar = true;} else{bvar = false;}

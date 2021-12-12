@@ -1,4 +1,5 @@
 #pragma once
+#include "Input.hpp"
 class GLFWwindow;
 
 class Engine {
@@ -10,6 +11,7 @@ class Engine {
 
 
     GLFWwindow* window;
+
     enum KeyMode{
         Release,
         Press,
@@ -25,12 +27,14 @@ class Engine {
     KeyMode* keyStatePrevious;
     bool onKeyUpdate;
 
-    void engine_key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
+    Input input;
 
+    void engine_key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
 };
+
 extern Engine *currentEngine;
 
 
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
-
+void cursorpos_callback(GLFWwindow* window, double x, double y);
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);

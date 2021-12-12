@@ -1,7 +1,10 @@
 #include <glm/vec3.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <iostream>
+
 #include "Camera.hpp"
-#include "PlayerMove.h"
+#include "PlayerMove.hpp"
+#include "Input.hpp"
 
 Camera::Camera(float fov, float aspect, float near, float far)
 {
@@ -11,41 +14,19 @@ Camera::Camera(float fov, float aspect, float near, float far)
         near,              // Near clipping plane. Keep as big as possible, or you'll get precision issues.
         far             // Far clipping plane. Keep as little as possible.
     );
+    direction.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+    direction.y = sin(glm::radians(pitch));
+    direction.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+    direction = glm::normalize(direction);
 }
 
 void Camera::UpdateView()
 {
-    glm::vec3 cameraTarget = glm::vec3(0.0f, 0.0f, 0.0f);
     glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
-
-    // glm::vec3 cameraDirection = glm::normalize(this->position - cameraTarget);
-    // glm::vec3 cameraRight = glm::normalize(glm::cross(up, cameraDirection));
-    // glm::vec3 cameraUp = glm::cross(cameraDirection, cameraRight);
 
     this->view = glm::lookAt(
         this->position,
-        cameraTarget,
+        this->position + direction,
         up
     );
-}
-
-
-void Camera::Control(PlayerMove move)
-{   
-    glm::vec3* pos = PtrPosition();
-
-    glm::vec3 cameraDirection = glm::normalize(*pos - glm::vec3(0.0f));
-    glm::vec3 cameraLeft = -glm::normalize(glm::cross(glm::vec3(0,1,0), cameraDirection));
-    glm::vec3 cameraUp = glm::cross(cameraDirection, -cameraLeft);
-
-    if(move.Left) {
-        *pos = *pos + cameraLeft;}
-    if(move.Right) {*pos = *pos - cameraLeft;}
-    if(move.Forward) {*pos = *pos + cameraDirection;}
-    if(move.Backwards) {*pos = *pos - cameraDirection;}
-
-    if(move.Up) {*pos = *pos + cameraUp;}
-    if(move.Down) {*pos = *pos - cameraUp;}
-
-    UpdateView();
 }
