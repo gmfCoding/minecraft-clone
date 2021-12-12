@@ -61,45 +61,30 @@ class Mineclone : public Engine {
 
     void Start() override {
         Engine::Start();
+
+        Renderer::CreateProgram("default", "./shaders/vertex.shader", "./shaders/fragment.shader");
+        Renderer::CreateProgram("world", "./shaders/world_vert.shader", "./shaders/world_frag.shader");
+
+
         camera = new Camera(70.0f, 4.0f / 3.0f, 0.1f, 100.0f);
         Renderer::camera = camera;
         camera->SetPosition(glm::vec3(6.0f,3.5f,7.0f)*2.0f);
         camera->UpdateView();
 
-        glm::vec3 cameraPos = glm::vec3(6.0f,3.5f,7.0f)*2.0f;
-        glm::vec3 cameraTarget = glm::vec3(0.0f, 0.0f, 0.0f);
-        // glm::vec3 cameraDirection = glm::normalize(cameraPos - cameraTarget);
-        glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
-        // glm::vec3 cameraRight = glm::normalize(glm::cross(up, cameraDirection));
-        // glm::vec3 cameraUp = glm::cross(cameraDirection, cameraRight);
-
-        glm::mat4 cameraMatrix = glm::lookAt(
-            cameraPos, // the position of your camera, in world space
-            cameraTarget,   // where you want to look at, in world space
-            up        // probably glm::vec3(0,1,0), but (0,-1,0) would make you looking upside-down, which can be great too
-        );
-
         Mesh* mesh = GenerateCubeMesh();
 
-        const std::string defMat = "default";
         object = new Object();
-
-        // Object* object = new Object("default", mesh);
-        // object->renderer = new MeshRenderer("default");
-        // object->renderer->Bind(mesh);
-        // object->position = {0.0f,0.0f,0.0f};
 
         object->renderer = new MeshRenderer("default");
         object->renderer->Bind(mesh);
-
-        //renderer->Bind(mesh);
-        //object->renderer = renderer;
-        //world = World::LoadWorld("world-imports/waterthing.json", object);
-        //world = World::LoadWorld("world-imports/grasswater.json", object);
-        world = World::LoadWorld("world-imports/desolateisland.json", object);
+        object->SetPosition(glm::vec3(-10,0,0));
+        world = World::LoadWorld("world-imports/waterthing.json");
+        
+        //world = World::LoadWorld("world-imports/single.json");
+        //world = World::LoadWorld("world-imports/grasswater.json");
+        //world = World::LoadWorld("world-imports/desolateisland.json");
 
         glm::mat4 mat4id = glm::mat4(1.0);
-        *object->PtrTransform() = glm::translate(mat4id, glm::vec3(0.0f,0.0f,0.5f));
     }
 
     void Update() override {
@@ -108,11 +93,11 @@ class Mineclone : public Engine {
         glClearColor(235/255, 171/255, 87/255, 1.0);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         float rotation = glfwGetTime();
-
-        object->transform = glm::scale(object->transform, glm::vec3(glfwGetTime()/10.0));
-        
+        object->colour = glm::vec4(0.3, 0.1, 0.5, 1.0);
+        Renderer::RenderObject(object);
+        //object->transform = glm::scale(object->transform, glm::vec3(glfwGetTime()/10.0));
         world->Render();
-
+        
         glfwSwapBuffers(window);
 
         KeyMode* tmp = keyStateCurrent;
@@ -145,7 +130,6 @@ class Mineclone : public Engine {
         }
     }
 };
-
 
 
 int main() {

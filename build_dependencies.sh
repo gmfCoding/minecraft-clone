@@ -4,8 +4,8 @@ buildGlad=("
 )
 
 buildFileio=("
--c ${PWD}/include/glad/glad.c 
--o ${PWD}/bintmp/glad.o"
+-c ${PWD}/include/other/fileio.cpp 
+-o ${PWD}/bintmp/fileio.o"
 )
 
 /usr/bin/g++ ${buildGlad[*]} && echo "Glad Built Sucessfully" || echo "Glad Build Failed"

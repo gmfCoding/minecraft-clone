@@ -82,6 +82,8 @@ void Renderer::RenderObject(Object* object)
     glm::mat4* tPtr = object->PtrTransform();
     glm::mat4 mvp = camera->projection * camera->view * object->GetTransform();
 
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
     GLCall(glUseProgram(program));
     
     GLCall(GLuint uniColour = glGetUniformLocation(program, "col_uni"));
@@ -101,7 +103,9 @@ void Renderer::RenderObject(Object* object)
 
 
     GLCall(glBindVertexArray(renderer->vao));
+    
     GLCall(glDrawElements(GL_TRIANGLES, renderer->size, GL_UNSIGNED_INT, nullptr));
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 }
 
 using Index = unsigned int;

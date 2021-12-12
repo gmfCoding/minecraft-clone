@@ -18,6 +18,11 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 }
 
 void Engine::engine_key_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
+    if (key >= RECKEY_COUNT)
+    {
+        return;
+    }
+    
     onKeyUpdate = true;
     if(action == GLFW_PRESS)
         keyStateCurrent[key] = KeyMode::Press;
@@ -30,7 +35,6 @@ void Engine::Start() {
     currentEngine = this;
     keyStateCurrent = &_keyStateBuffer1[0];
     keyStatePrevious = &_keyStateBuffer2[0];
-
 }
 
 void Engine::Update() {
@@ -65,9 +69,6 @@ int Engine::Intialise()
     // During init, enable debug output
     glEnable(GL_DEBUG_OUTPUT);
     // glDebugMessageCallback( MessageCallback, nullptr);
-
-    Renderer::CreateProgram("default", "./shaders/vertex.shader", "./shaders/fragment.shader");
-
     this->Start();
 
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
