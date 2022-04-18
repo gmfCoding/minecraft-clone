@@ -65,9 +65,8 @@ class Mineclone : public Engine {
     void Start() override {
         Engine::Start();
         targetFPS = 144.0;
-        Renderer::CreateProgram("default", "./shaders/vertex.shader", "./shaders/fragment.shader");
-        Renderer::CreateProgram("world", "./shaders/world_vert.shader", "./shaders/world_frag.shader");
-
+        Renderer::CreateProgram("default", getFilePath("shaders/vertex.shader"), getFilePath("shaders/fragment.shader"));
+        
 
         camera = new Camera(70.0f, 4.0f / 3.0f, 0.1f, 100.0f);
         Renderer::camera = camera;
@@ -110,6 +109,8 @@ class Mineclone : public Engine {
         KeyMode* tmp = keyStateCurrent;
         // switch buffers
         keyStateCurrent = keyStatePrevious;
+
+
         for (size_t i = 0; i < RECKEY_COUNT; i++)
         {
             if (keyStateCurrent[i] == KeyMode::Press)

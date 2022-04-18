@@ -1,5 +1,5 @@
 #include "engine.hpp" 
-#include "glad.h"
+#include "LoadGlad.h"
 #include "GL/gl.h"
 #include <iostream>
 #include <string>
@@ -84,7 +84,6 @@ int Engine::Intialise()
     while(!glfwWindowShouldClose(window)) {
         deltaTime =  glfwGetTime() - timeLastFrame;
         timeLastFrame = glfwGetTime();
-        std::cout << 1/deltaTime << std::endl;
         this->Update();
 
         while (glfwGetTime() < lasttime + 1.0/targetFPS) {

@@ -75,17 +75,23 @@ struct VoxelData
     int pallet;
 };
 
+
+struct VoxelVertexData {
+    glm::vec3 position;
+    glm::vec2 uv;
+};
+
 class Object;
 
 World *World::LoadWorld(const char *path)
 {
-    std::ifstream i(path);
+    std::ifstream i(getFilePath(path));
     nlohmann::json j;
     i >> j;
     std::vector<std::vector<int64_t>> voxels = j["layers"][0]["voxels"].get<std::vector<std::vector<int64_t>>>();
 
     int maxSize[3]{0, 0, 0};
-
+    // Compute the max size the world would need to be to fit the loading world.
     for (size_t i = 0; i < voxels.size(); i++)
     {
         for (size_t j = 0; j < 3; j++)
@@ -129,6 +135,7 @@ World *World::LoadWorld(const char *path)
         indices->push_back(o + 2);                                    \
     }
 
+
 void ChunkRenderer::Regenerate()
 {
     auto vertices = &(mesh->vertices);
@@ -146,6 +153,7 @@ void ChunkRenderer::Regenerate()
             for (size_t z = 0; z < world->sizeZ; z++)
             {
                 Block b = BLOCK(x, y, z);
+                // If the block is "air" continue.
                 if (b.colour.w <= 0.0f)
                 {
                     continue;
@@ -158,26 +166,13 @@ void ChunkRenderer::Regenerate()
                 glm::vec3 e = glm::vec3(x + 1, y, z);
                 glm::vec3 w = glm::vec3(x - 1.0f, y, z);
 
+                // Generate Faces for each block, with conditions if those faces should be created.
                 FACE(a, a.y >= world->sizeY, x, y + 1, z, x + 1, y + 1, z, x + 1, y + 1, z + 1, x, y + 1, z + 1)
                 FACE(n, n.z >= world->sizeZ, x, y, z + 1, x, y + 1, z + 1, x + 1, y + 1, z + 1, x + 1, y, z + 1)
                 FACE(e, e.x >= world->sizeX, x+1,y,z, x+1,y,z+1, x+1,y+1,z+1,x+1,y+1,z);
                 FACE(s, s.z == -1, x, y, z, x + 1, y, z, x + 1, y + 1, z,  x, y + 1, z)
                 FACE(w, w.x == -1, x,y,z, x,y+1,z, x,y+1,z+1, x,y,z+1);
                 FACE(u, u.y == -1, x,y,z, x,y,z+1, x+1,y,z+1, x+1,y,z);
-
-                //     if (n.z >= world->sizeZ || NVALID(a))
-                //     {
-                //         int o = vertices->size();
-                //         vertices->push_back(glm::vec3(x,y,z+1));
-                //         vertices->push_back(glm::vec3(x+1,y,z+1));
-                //         vertices->push_back(glm::vec3(x+1,y+1,z+1));
-                //         vertices->push_back(glm::vec3(x,y+1,z+1));
-                //         indices->push_back(o);
-                //         indices->push_back(o+2);
-                //         indices->push_back(o+1);
-                //         indices->push_back(o);
-                //         indices->push_back(o+3);
-                //         indices->push_back(o+2);}
             }
         }
     }

@@ -2,11 +2,13 @@
 #include <string>
 #include <vector>
 #include <iostream>
-#include <glad.h>
 #include <glm/gtc/type_ptr.hpp>
+#include "LoadGlad.h"
+
 
 #include "gldebug.hpp"
 #include "fileio.hpp"
+#include "AtulPwd.hpp"
 
 #include "Rendering.hpp"
 #include "Object.hpp"
@@ -19,7 +21,7 @@ void Renderer::CreateProgram(const std::string& name, const std::string& vertexP
 {
     GLuint vertShader = glCreateShader(GL_VERTEX_SHADER);
     GLuint fragShader = glCreateShader(GL_FRAGMENT_SHADER);
-
+    std::cout << AtulPWD::mergePaths(AtulPWD::getExecutableDir(), vertexPath) << std::endl;
     std::string vertShaderStr = readFile(vertexPath);
     std::string fragShaderStr = readFile(fragmentPath);
     const char *vertShaderSrc = vertShaderStr.c_str();
@@ -82,8 +84,6 @@ void Renderer::RenderObject(Object* object)
     glm::mat4* tPtr = object->PtrTransform();
     glm::mat4 mvp = camera->projection * camera->view * object->GetTransform();
 
-    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-
     GLCall(glUseProgram(program));
     
     GLCall(GLuint uniColour = glGetUniformLocation(program, "col_uni"));
@@ -103,9 +103,7 @@ void Renderer::RenderObject(Object* object)
 
 
     GLCall(glBindVertexArray(renderer->vao));
-    
     GLCall(glDrawElements(GL_TRIANGLES, renderer->size, GL_UNSIGNED_INT, nullptr));
-    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 }
 
 using Index = unsigned int;

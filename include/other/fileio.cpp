@@ -1,6 +1,7 @@
 #include <string>
 #include <fstream>
 #include <iostream>
+#include "AtulPwd.hpp"
 
 std::string readFile(const std::string& filePath) {
     std::string content;
@@ -19,4 +20,9 @@ std::string readFile(const std::string& filePath) {
 
     fileStream.close();
     return content;
+}
+
+std::string getFilePath(const std::string& relative)
+{
+    return AtulPWD::mergePaths(AtulPWD::getExecutableDir(), relative);
 }

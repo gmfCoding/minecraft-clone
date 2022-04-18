@@ -1,7 +1,7 @@
 #pragma once
 #include <map>
 #include <string>
-#include <glad.h>
+#include "LoadGlad.h"
 #include "fileio.hpp"
 
 #include "Mesh.hpp"
