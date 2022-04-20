@@ -4,33 +4,16 @@
             "name": "Win32",
             "includePath": [
                 "${workspaceFolder}/**",
-                "${workspaceFolder}/include/**",
-                "${workspaceFolder}/include/glad/**",
-                "${workspaceFolder}/include/other"
+                "${workspaceFolder}/app/vendor/imgui",
+                "${workspaceFolder}/app/vendor/glad/include",
+                "${workspaceFolder}/app/vendor/imgui",
+                "${workspaceFolder}/app/vendor/imgui/backends",
+                "${workspaceFolder}/app/vendor"
             ],
-            "defines": [
-                "_DEBUG",
-                "UNICODE",
-                "_UNICODE"
-            ],
-            "compilerPath": "C:\\msys64\\mingw64\\bin\\gcc.exe",
-            "cStandard": "gnu17",
-            "cppStandard": "gnu++17",
-            "intelliSenseMode": "windows-gcc-x64"
-        },
-        {
-            "name": "linux",
-            "includePath": [
-                "${workspaceFolder}/**",
-                "${workspaceFolder}/include/**",
-                "${workspaceFolder}/include/glad/**",
-                "${workspaceFolder}/include/other"
-            ],
-            "defines": [],
-            "compilerPath": "/usr/bin/gcc",
-            "cStandard": "gnu17",
-            "cppStandard": "gnu++17",
-            "intelliSenseMode": "linux-gcc-x64"
+            "intelliSenseMode": "windows-msvc-x64",
+            "compilerPath": "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Tools/MSVC/14.29.30133/bin/Hostx64/x64/cl.exe",
+            "cStandard": "c17",
+            "cppStandard": "c++17"
         }
     ],
     "version": 4
