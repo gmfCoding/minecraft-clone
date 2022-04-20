@@ -1,2 +1,0 @@
-C:\msys64\mingw64\bin\ar.exe qc libother.a CMakeFiles/other.dir/AtulPwd.cpp.obj CMakeFiles/other.dir/fileio.cpp.obj
-C:\msys64\mingw64\bin\ranlib.exe libother.a
