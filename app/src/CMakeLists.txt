@@ -12,6 +12,7 @@ Object.cpp
 PlayerController.cpp
 Rendering.cpp
 World.cpp
+GizmoLine.cpp
 )
 
 list(TRANSFORM LSOURCE PREPEND "${CMAKE_CURRENT_SOURCE_DIR}/")

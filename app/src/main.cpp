@@ -15,8 +15,11 @@
 #include "engine.hpp"
 #include "PlayerMove.hpp"
 #include "PlayerController.hpp"
-
+#include "MaterialSystem.hpp"
+#include "Material.hpp"
 #include <glm/gtx/string_cast.hpp>
+
+#include "GizmoLine.hpp"
 
 Mesh* GenerateCubeMesh()
 {
@@ -73,6 +76,12 @@ class Mineclone : public Engine {
 
     Object* cubie;
 
+
+    GizmoLine* line1;
+    GizmoLine* line2;
+    GizmoLine* line3;
+
+
     Object* CreatePosCube(Mesh* mesh, glm::vec3 direction)
     {
         Object* cube = new Object();
@@ -102,8 +111,8 @@ class Mineclone : public Engine {
     void Start() override {
         Engine::Start();
         targetFPS = 144.0;
-        Renderer::CreateProgram("default", getAssetPath("shaders/vertex.shader"), getAssetPath("shaders/fragment.shader"));
-        
+
+        LoadMaterials();
 
         camera = new Camera(70.0f, 4.0f / 3.0f, 0.1f, 100.0f);
         Renderer::camera = camera;
@@ -129,17 +138,36 @@ class Mineclone : public Engine {
         posZCube = CreatePosCube(mesh, glm::vec3(0,0,1));
         negZCube = CreatePosCube(mesh, glm::vec3(0,0,-1));
 
-        world = World::LoadWorld("world-imports/single.json");
+        line1 = new GizmoLine(glm::vec3(0,0,0), glm::vec3(1,0,0));
+        line2 = new GizmoLine(glm::vec3(0,0,0), glm::vec3(0,1,0));
+        line3 = new GizmoLine(glm::vec3(0,0,0), glm::vec3(0,0,1));
+        
+        std::cout << glm::vec3(1,0,0).y << std::endl;
+        line1->setColor(glm::vec3(1,0,0) + glm::vec3(0));
+        line2->setColor(glm::vec3(0,1,0) + glm::vec3(0));
+        line3->setColor(glm::vec3(0,0,1) + glm::vec3(0));
+
+
+
+        //world = World::LoadWorld("world-imports/single.json");
         input.onMouseChangedArr.push_back([this](void* _input){ playerController->OnMouseInput(_input);});
 
         glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED); 
 
-        //world = World::LoadWorld("world-imports/single.json");
+        world = World::LoadWorld("world-imports/single.json");
         //world = World::LoadWorld("world-imports/grasswater.json");
         //world = World::LoadWorld("world-imports/desolateisland.json");
-
+        world->transform = glm::translate(glm::vec3(1,0,1));
         glm::mat4 mat4id = glm::mat4(1.0);
     }
+
+
+    void LoadMaterials()
+    {
+        VertexFragmentCombinationMaterial* basic = new VertexFragmentCombinationMaterial("basic", getAssetPath("/shaders/basic_vertex.shader"), getAssetPath("/shaders/basic_fragment.shader"));
+        Renderer::CreateProgram("default", getAssetPath("shaders/vertex.shader"), getAssetPath("shaders/fragment.shader"));
+    }
+
 
     void Update() override {
         Input();
@@ -149,17 +177,27 @@ class Mineclone : public Engine {
         float rotation = glfwGetTime();
         Renderer::camera->UpdateView();
 
-        posXCube->SetScale(glm::vec3(glfwGetTime() / 20.0, glfwGetTime() / 20.0, glfwGetTime() / 20.0));
+        //posXCube->SetScale(glm::vec3(glfwGetTime() / 20.0, glfwGetTime() / 20.0, glfwGetTime() / 20.0));
 
-        cubie->SetScale(glm::vec3(1.0 / glfwGetTime(),1.0 / glfwGetTime(),1.0 / glfwGetTime()));
-        Renderer::RenderObject(cubie);
-        Renderer::RenderObject(posXCube);
-        Renderer::RenderObject(negXCube);
-        Renderer::RenderObject(posYCube);
-        Renderer::RenderObject(negYCube);
-        Renderer::RenderObject(posZCube);
-        Renderer::RenderObject(negZCube);
-        //world->Render();
+        //cubie->SetScale(glm::vec3(1.0 / glfwGetTime(),1.0 / glfwGetTime(),1.0 / glfwGetTime()));
+        // Renderer::RenderObject(cubie);
+        // Renderer::RenderObject(posXCube);
+        // Renderer::RenderObject(negXCube);
+        // Renderer::RenderObject(posYCube);
+        // Renderer::RenderObject(negYCube);
+        // Renderer::RenderObject(posZCube);
+        // Renderer::RenderObject(negZCube);
+
+        line1->setMVP(Renderer::camera->projection * Renderer::camera->view);
+        line2->setMVP(Renderer::camera->projection * Renderer::camera->view);
+        line3->setMVP(Renderer::camera->projection * Renderer::camera->view);
+
+        line1->draw(Renderer::camera);
+        line2->draw(Renderer::camera);
+        line3->draw(Renderer::camera);
+
+        // world->transform = glm::translate(glm::vec3(0,0,glfwGetTime()));
+        world->Render();
 
         glfwSwapBuffers(window);
 
@@ -183,8 +221,6 @@ class Mineclone : public Engine {
 
     void Input()
     {
-        //Renderer::camera->SetRotation(glm::quat(glm::vec3(0, angle, 0)));
-
         if(onKeyUpdate)
         {
 #define KEYCONTROL(keyId, bvar) if(keyStateCurrent[GLFW_KEY_##keyId] == KeyMode::Press || keyStateCurrent[GLFW_KEY_##keyId] == KeyMode::Hold) { bvar = true;} else{bvar = false;}

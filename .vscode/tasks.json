@@ -1,0 +1,35 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Generate Cmake",
+            "type": "shell",
+            "command": "cmake",
+            "args": [
+                "-B build",
+                "-G \"MinGW Makefiles\""
+            ]
+        },
+        {
+            "label": "Build Cmake",
+            "type": "shell",
+            "command": "cmake --build build"
+        },
+        {
+            "label": "Run Project",
+            "type": "process",
+            "command": "${workspaceFolder}/build/app.exe"
+        },
+        {
+            "label": "Build and Run Project",
+            "type": "shell",
+            "command": "exit",
+            "dependsOrder": "sequence",
+            "dependsOn": [
+                "Build Cmake",
+                "Run Project"
+            ],
+            "problemMatcher": []
+        }
+    ]
+}

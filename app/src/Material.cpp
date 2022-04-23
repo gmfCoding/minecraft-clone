@@ -14,7 +14,7 @@ void Material::Bind() {
 
 Material::Material(const std::string _materialName) : materialName(_materialName)
 {
-    MaterialSystem::AddMaterial(*this);
+    MaterialSystem::AddMaterial(this);
 }
 
 VertexFragmentCombinationMaterial::VertexFragmentCombinationMaterial(const std::string _materialName, std::string _vertexPath, std::string _fragmentPath) : Material(_materialName), vertexPath(_vertexPath), fragmentPath(_fragmentPath)

@@ -90,8 +90,6 @@ int Engine::Intialise()
             // TODO: Put the thread to sleep, yield, or simply do nothing
         }
         lasttime += 1.0/targetFPS;
-
-
     }
     glfwTerminate();
     return 0;

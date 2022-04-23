@@ -6,6 +6,7 @@
 #include "PlayerController.hpp"
 #include "Input.hpp"
 
+#include <iostream>
 
 void PlayerController::Control(PlayerMove move)
 {
@@ -31,6 +32,7 @@ void PlayerController::OnMouseInput(void* _input)
     Input* input = reinterpret_cast<Input*> (_input);
     float sensitivity = 30.0f * currentEngine->deltaTime;
 
+
     camera->yaw   += input->mouseXDelta * sensitivity;
     camera->pitch += input->mouseYDelta * sensitivity;
 
@@ -38,9 +40,4 @@ void PlayerController::OnMouseInput(void* _input)
          camera->pitch =  89.0f;
     if( camera->pitch < -89.0f)
          camera->pitch = -89.0f;
-
-    camera->direction.x = cos(glm::radians(camera->yaw)) * cos(glm::radians(camera->pitch));
-    camera->direction.y = sin(glm::radians(camera->pitch));
-    camera->direction.z = sin(glm::radians(camera->yaw)) * cos(glm::radians(camera->pitch));
-    camera->direction = glm::normalize(camera->direction);
 }

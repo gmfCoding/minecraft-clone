@@ -1,4 +1,5 @@
 {
+    "workspaceKeybindings.gmfcCMakeApp.enabled": true,
     "files.associations": {
         "iostream": "cpp",
         "xstring": "cpp",
@@ -69,6 +70,8 @@
         "xstddef": "cpp",
         "xtr1common": "cpp",
         "xtree": "cpp",
-        "xutility": "cpp"
+        "xutility": "cpp",
+        "shader": "hlsl",
+        "*.json": "jsonc"
     }
 }

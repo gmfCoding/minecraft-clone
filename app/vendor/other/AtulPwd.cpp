@@ -40,6 +40,7 @@ std::string getExecutablePath() {
    return std::string(rawPathName);
 }
 
+// TODO: delete[] causing breaks?   
 std::string getExecutableDir() {
     std::string executablePath = getExecutablePath();
     char* exePath = new char[executablePath.length()];

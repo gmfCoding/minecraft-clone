@@ -19,6 +19,8 @@ public:
     double mouseXDelta = 0;
     double mouseYDelta = 0;
 
+    bool firstTime = true;
+
     void OnMousePosChanged(GLFWwindow* window, double x, double y, getcursorposfun getcursor);
     std::vector<std::function<void(void*)>> onMouseChangedArr;
 };

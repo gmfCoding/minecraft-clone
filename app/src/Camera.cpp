@@ -24,6 +24,11 @@ void Camera::UpdateView()
 {
     glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
 
+    direction.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+    direction.y = sin(glm::radians(pitch));
+    direction.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+    direction = glm::normalize(direction);
+
     this->view = glm::lookAt(
         this->position,
         this->position + direction,

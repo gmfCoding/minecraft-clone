@@ -4,9 +4,9 @@
 #include "fileio.hpp"
 
 std::map<std::string, Material*> MaterialSystem::materialMap = std::map<std::string, Material*>();
-void MaterialSystem::AddMaterial(Material& material)
+void MaterialSystem::AddMaterial(Material* material)
 {
-    materialMap[material.materialName] = &material;
+    materialMap[material->materialName] = material;
 }
 
 GLuint MaterialSystem::CreateVFProgram(const std::string& vertexPath, const std::string& fragmentPath)
