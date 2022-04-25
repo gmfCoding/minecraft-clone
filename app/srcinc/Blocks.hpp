@@ -3,7 +3,7 @@
 #include <map>
 #include <string>
 #include <vector>
-
+#include <set>
 
 class Blocks
 {
@@ -43,6 +43,8 @@ class Blocks
     static bool blocksInitialised;
 
     static void InitialiseBlocks();
+
+    static std::set<std::string> GetTextureNames();
 };
 
 // std::map<int, std::string> Blocks::blockIDToName;

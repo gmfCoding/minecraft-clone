@@ -14,7 +14,7 @@ class Engine {
     double timeLastFrame;
     double deltaTime;
     double targetFPS = 60.0;
-
+    bool quit = false;
     enum KeyMode{
         Release,
         Press,

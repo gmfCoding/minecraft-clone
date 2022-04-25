@@ -3,20 +3,28 @@
 
 #include <string>
 
+struct PixelData
+{
+    unsigned char r, g, b, a;
+};
+
+
 class Image
 {
+    std::string mPath;
     int sizeX, sizeY, channelCount;
-    unsigned char *data;
+    PixelData* data;
 
 public:
     Image();
     void Load(const std::string &path);
-    const unsigned char* GetPixelAt(int x, int y);
+    const PixelData* GetPixelAt(int x, int y);
 
+    std::string& Path = mPath;
     const int& width = sizeX;
     const int& height = sizeY;
-    const int& channels = channelCount;
-    const unsigned char *c_data = data;
+    int channels = channelCount;
+    const PixelData* c_data = data;
     
     ~Image();
 };

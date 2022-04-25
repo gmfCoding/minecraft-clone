@@ -81,7 +81,7 @@ int Engine::Intialise()
     // glDebugMessageCallback( MessageCallback, nullptr);
     this->Start();
     double lasttime = glfwGetTime();
-    while(!glfwWindowShouldClose(window)) {
+    while(!glfwWindowShouldClose(window) && !quit) {
         deltaTime =  glfwGetTime() - timeLastFrame;
         timeLastFrame = glfwGetTime();
         this->Update();

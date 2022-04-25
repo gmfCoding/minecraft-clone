@@ -73,6 +73,7 @@
         "xutility": "cpp",
         "shader": "hlsl",
         "*.json": "jsonc",
-        "*.rh": "cpp"
+        "*.rh": "cpp",
+        "set": "cpp"
     }
 }

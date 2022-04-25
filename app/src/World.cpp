@@ -242,7 +242,7 @@ void ChunkRenderer::Bind(Mesh* mesh)
 
 #pragma region TEXTURES
 
-    auto [textureID, img] = TextureManager::LoadTextureGPU("resources/textures/sand.png");
+    auto [textureID, img] = TextureManager::LoadTextureGPU("resources/textures/grass_top.png");
     texture = textureID;
 
     // bind the texture

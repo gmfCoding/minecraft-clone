@@ -7,6 +7,8 @@
 
 #include <iostream>
 #include <vector>
+#include <set>
+
 #include <stb_image.h>
 
 #include "Input.hpp"
@@ -29,43 +31,6 @@
 
 #include "GizmoLine.hpp"
 
-Mesh* GenerateCubeMesh()
-{
-    Mesh* mesh = new Mesh();
-
-    glm::vec3 vertices[] = {
-        glm::vec3(0, 0, 0),
-        glm::vec3(1, 0, 0),
-        glm::vec3(1, 1, 0),
-        glm::vec3(0, 1, 0),
-        glm::vec3(0, 1, 1),
-        glm::vec3(1, 1, 1),
-        glm::vec3(1, 0, 1),
-        glm::vec3(0, 0, 1),
-    };
-    
-
-    unsigned short indices[] = {
-        0, 2, 1, //face front
-        0, 3, 2,
-        2, 3, 4, //face top
-        2, 4, 5,
-        1, 2, 5, //face right
-        1, 5, 6,
-        0, 7, 4, //face left
-        0, 4, 3,
-        5, 4, 7, //face back
-        5, 7, 6,
-        0, 6, 7, //face bottom
-        0, 1, 6
-    };
-
-    mesh->vertices = std::vector<glm::vec3>(vertices, vertices + 8);
-    mesh->indices = std::vector<unsigned short>(indices, indices + 36);
-
-    return mesh;
-}
-
 class Mineclone : public Engine {
 
     PlayerMove playerMove{};
@@ -74,50 +39,11 @@ class Mineclone : public Engine {
 
     PlayerController* playerController;
 
-    Object* posXCube;
-    Object* negXCube;
-
-    Object* posYCube;
-    Object* negYCube;
-
-    Object* posZCube;
-    Object* negZCube;
-
-    Object* cubie;
-
-
     GizmoLine* line1;
     GizmoLine* line2;
     GizmoLine* line3;
 
     Image image;
-
-
-    Object* CreatePosCube(Mesh* mesh, glm::vec3 direction)
-    {
-        Object* cube = new Object();
-        cube->renderer = new MeshRenderer("default");
-        cube->renderer->Bind(mesh);
-        
-        cube->SetScale(glm::vec3(1.0f,0.1f,0.1f));
-        
-        cube->SetPosition(direction * 2.0f);
-        for (size_t i = 0; i < 3; i++)
-        {
-            if(direction[i] < 0)
-            {
-                direction[0] = 1.0 - abs(direction[0]);
-                direction[1] = 1.0 - abs(direction[1]);
-                direction[2] = 1.0 - abs(direction[2]);
-                break;
-            }
-        }
-
-        
-        cube->colour = glm::vec4(direction, 1);
-        return cube;
-    }
-
 
     void Start() override {
         Engine::Start();
@@ -133,22 +59,6 @@ class Mineclone : public Engine {
         playerController = new PlayerController();
         playerController->camera = Renderer::camera;
 
-        Mesh* mesh = GenerateCubeMesh();
-
-        cubie = new Object();
-        cubie->renderer = new MeshRenderer("default");
-        cubie->renderer->Bind(mesh);
-        cubie->SetScale(glm::vec3(0.1f,0.1f,0.1f));
-        cubie->SetPosition(glm::vec3(0,0,0));
-
-        posXCube = CreatePosCube(mesh, glm::vec3(1,0,0));
-
-        negXCube = CreatePosCube(mesh, glm::vec3(-1,0,0));
-        posYCube = CreatePosCube(mesh, glm::vec3(0,1,0));
-        negYCube = CreatePosCube(mesh, glm::vec3(0,-1,0));
-        posZCube = CreatePosCube(mesh, glm::vec3(0,0,1));
-        negZCube = CreatePosCube(mesh, glm::vec3(0,0,-1));
-
         line1 = new GizmoLine(glm::vec3(0,0,0), glm::vec3(1,0,0));
         line2 = new GizmoLine(glm::vec3(0,0,0), glm::vec3(0,1,0));
         line3 = new GizmoLine(glm::vec3(0,0,0), glm::vec3(0,0,1));
@@ -159,9 +69,13 @@ class Mineclone : public Engine {
         line3->setColor(glm::vec3(0,0,1) + glm::vec3(0));
 
         Blocks::InitialiseBlocks();
+        auto textures = Blocks::GetTextureNames();
+        std::set<std::string> fstfImages;
+        #define COMMONPATH(i) getAssetPathMany({"textures",i})
 
+        fstfImages.insert({COMMONPATH("red"), COMMONPATH("green"), COMMONPATH("blue"),  COMMONPATH("pink")});
 
-        LoadTextureExample();
+        TextureManager::CreateAtlasFromFiles(textures);
         
         input.onMouseChangedArr.push_back([this](void* _input){ playerController->OnMouseInput(_input);});
 
@@ -173,8 +87,6 @@ class Mineclone : public Engine {
         world->transform = glm::translate(glm::vec3(1,0,1));
         glm::mat4 mat4id = glm::mat4(1.0);
 
-
-        TexturedQuadExample();
     }
 
 
@@ -185,13 +97,6 @@ class Mineclone : public Engine {
         Foreach block setup the UV Coords that the face texture corrasponds to.
     */
 
-    void LoadTextureExample()
-    {
-        std::string filePath = Blocks::blockIDToConfig[Blocks::blockNameToID["sand"]]->textureFiles[0];
-        std::string path = getAssetPathMany({"textures", filePath+".png"});
-        image.Load(path);
-    }
-
     void LoadMaterials()
     {
         new VertexFragmentCombinationMaterial("basic",          getAssetPathMany({"shaders", "basic_vertex.shader"}),   getAssetPathMany({"shaders", "basic_fragment.shader"}));
@@ -199,56 +104,42 @@ class Mineclone : public Engine {
         new VertexFragmentCombinationMaterial("default",        getAssetPathMany({"shaders", "vertex.shader"}),         getAssetPathMany({"shaders", "fragment.shader"}));
     }
 
-    ImageExample ie;
-
-    void TexturedQuadExample()
-    {
-        ie = ImageExample();
-        ie.Init(&image);
-    }
-
-
     void Update() override {
+
         Input();
         playerController->Control(playerMove);
-        glClearColor(235/255, 171/255, 87/255, 1.0);
+
+        glClearColor(135/255.0f, 206/255.0f, 235/255.0f, 1.0);
+
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        float rotation = glfwGetTime();
+        
+        float time = glfwGetTime();
         Renderer::camera->UpdateView();
 
 
-        //posXCube->SetScale(glm::vec3(glfwGetTime() / 20.0, glfwGetTime() / 20.0, glfwGetTime() / 20.0));
+        #pragma region RENDER_3D_GIZMO
+            line1->setMVP(Renderer::camera->projection * Renderer::camera->view);
+            line2->setMVP(Renderer::camera->projection * Renderer::camera->view);
+            line3->setMVP(Renderer::camera->projection * Renderer::camera->view);
 
-        //cubie->SetScale(glm::vec3(1.0 / glfwGetTime(),1.0 / glfwGetTime(),1.0 / glfwGetTime()));
-        // Renderer::RenderObject(cubie);
-        // Renderer::RenderObject(posXCube);
-        // Renderer::RenderObject(negXCube);
-        // Renderer::RenderObject(posYCube);
-        // Renderer::RenderObject(negYCube);
-        // Renderer::RenderObject(posZCube);
-        Renderer::RenderObject(negZCube);
+            line1->draw(Renderer::camera);
+            line2->draw(Renderer::camera);
+            line3->draw(Renderer::camera);
+        #pragma endregion
 
-        line1->setMVP(Renderer::camera->projection * Renderer::camera->view);
-        line2->setMVP(Renderer::camera->projection * Renderer::camera->view);
-        line3->setMVP(Renderer::camera->projection * Renderer::camera->view);
-
-        line1->draw(Renderer::camera);
-        line2->draw(Renderer::camera);
-        line3->draw(Renderer::camera);
-
-        // world->transform = glm::translate(glm::vec3(0,0,glfwGetTime()));
-        ie.Update();
-        
         
         world->renderer->Render();
 
 
+        EndUpdate();
+    }
+
+    void EndUpdate()
+    {
         glfwSwapBuffers(window);
 
         KeyMode* tmp = keyStateCurrent;
-        // switch buffers
         keyStateCurrent = keyStatePrevious;
-
 
         for (size_t i = 0; i < RECKEY_COUNT; i++)
         {
@@ -258,9 +149,8 @@ class Mineclone : public Engine {
             keyStateCurrent[i] == KeyMode::None;
         }
         
-        
         keyStatePrevious = keyStateCurrent;
-        glfwPollEvents();    
+        glfwPollEvents();   
     }
 
     void Input()
