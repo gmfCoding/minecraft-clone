@@ -58,7 +58,7 @@ public:
         Example7 = 0b10000000 };
     unsigned char flags;
     MeshRenderer* renderer;
-    Shader* shader;
+
 public:
     glm::vec3* PtrPosition();
     glm::vec3* PtrScale();

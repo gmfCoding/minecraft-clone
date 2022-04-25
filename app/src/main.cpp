@@ -1,9 +1,13 @@
-#include <iostream>
+
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/transform.hpp>
-#include <vector>
 #include <glm/gtx/rotate_vector.hpp>
+#include <glm/gtx/string_cast.hpp>
+
+#include <iostream>
+#include <vector>
+#include <stb_image.h>
 
 #include "Input.hpp"
 #include "Mesh.hpp"
@@ -17,7 +21,11 @@
 #include "PlayerController.hpp"
 #include "MaterialSystem.hpp"
 #include "Material.hpp"
-#include <glm/gtx/string_cast.hpp>
+#include "Blocks.hpp"
+#include "AtulPwd.hpp"
+#include "gmfc_image.hpp"
+#include "TextureManager.hpp"
+#include "ImageExample.hpp"
 
 #include "GizmoLine.hpp"
 
@@ -35,6 +43,7 @@ Mesh* GenerateCubeMesh()
         glm::vec3(1, 0, 1),
         glm::vec3(0, 0, 1),
     };
+    
 
     unsigned short indices[] = {
         0, 2, 1, //face front
@@ -80,6 +89,8 @@ class Mineclone : public Engine {
     GizmoLine* line1;
     GizmoLine* line2;
     GizmoLine* line3;
+
+    Image image;
 
 
     Object* CreatePosCube(Mesh* mesh, glm::vec3 direction)
@@ -147,25 +158,53 @@ class Mineclone : public Engine {
         line2->setColor(glm::vec3(0,1,0) + glm::vec3(0));
         line3->setColor(glm::vec3(0,0,1) + glm::vec3(0));
 
+        Blocks::InitialiseBlocks();
 
 
-        //world = World::LoadWorld("world-imports/single.json");
+        LoadTextureExample();
+        
         input.onMouseChangedArr.push_back([this](void* _input){ playerController->OnMouseInput(_input);});
 
         glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED); 
 
-        world = World::LoadWorld("world-imports/single.json");
-        //world = World::LoadWorld("world-imports/grasswater.json");
+        //world = World::LoadWorld("world-imports/single.json");
+        world = World::LoadWorld("world-imports/grasswater.json");
         //world = World::LoadWorld("world-imports/desolateisland.json");
         world->transform = glm::translate(glm::vec3(1,0,1));
         glm::mat4 mat4id = glm::mat4(1.0);
+
+
+        TexturedQuadExample();
     }
 
 
+    /*
+        Setup block texture side definitions: DONE
+        Loop over all textures 'pragma once'
+        Create an atlas map of them mapping the filename to UV coords
+        Foreach block setup the UV Coords that the face texture corrasponds to.
+    */
+
+    void LoadTextureExample()
+    {
+        std::string filePath = Blocks::blockIDToConfig[Blocks::blockNameToID["sand"]]->textureFiles[0];
+        std::string path = getAssetPathMany({"textures", filePath+".png"});
+        image.Load(path);
+    }
+
     void LoadMaterials()
     {
-        VertexFragmentCombinationMaterial* basic = new VertexFragmentCombinationMaterial("basic", getAssetPath("/shaders/basic_vertex.shader"), getAssetPath("/shaders/basic_fragment.shader"));
-        Renderer::CreateProgram("default", getAssetPath("shaders/vertex.shader"), getAssetPath("shaders/fragment.shader"));
+        new VertexFragmentCombinationMaterial("basic",          getAssetPathMany({"shaders", "basic_vertex.shader"}),   getAssetPathMany({"shaders", "basic_fragment.shader"}));
+        new VertexFragmentCombinationMaterial("alt_textured",   getAssetPathMany({"shaders", "alt_tex_vertex.shader"}), getAssetPathMany({"shaders", "alt_tex_fragment.shader"}));
+        new VertexFragmentCombinationMaterial("default",        getAssetPathMany({"shaders", "vertex.shader"}),         getAssetPathMany({"shaders", "fragment.shader"}));
+    }
+
+    ImageExample ie;
+
+    void TexturedQuadExample()
+    {
+        ie = ImageExample();
+        ie.Init(&image);
     }
 
 
@@ -177,6 +216,7 @@ class Mineclone : public Engine {
         float rotation = glfwGetTime();
         Renderer::camera->UpdateView();
 
+
         //posXCube->SetScale(glm::vec3(glfwGetTime() / 20.0, glfwGetTime() / 20.0, glfwGetTime() / 20.0));
 
         //cubie->SetScale(glm::vec3(1.0 / glfwGetTime(),1.0 / glfwGetTime(),1.0 / glfwGetTime()));
@@ -186,7 +226,7 @@ class Mineclone : public Engine {
         // Renderer::RenderObject(posYCube);
         // Renderer::RenderObject(negYCube);
         // Renderer::RenderObject(posZCube);
-        // Renderer::RenderObject(negZCube);
+        Renderer::RenderObject(negZCube);
 
         line1->setMVP(Renderer::camera->projection * Renderer::camera->view);
         line2->setMVP(Renderer::camera->projection * Renderer::camera->view);
@@ -197,7 +237,11 @@ class Mineclone : public Engine {
         line3->draw(Renderer::camera);
 
         // world->transform = glm::translate(glm::vec3(0,0,glfwGetTime()));
-        world->Render();
+        ie.Update();
+        
+        
+        world->renderer->Render();
+
 
         glfwSwapBuffers(window);
 

@@ -13,8 +13,8 @@ struct Block
 };
 
 class ChunkRenderer : public MeshRenderer {
-    public:
     World* world;
+    public:
     Mesh* mesh;
     int chunkX, chunkY, chunkZ;
 
@@ -24,6 +24,11 @@ class ChunkRenderer : public MeshRenderer {
     }
 
     void Regenerate();
+
+
+    void Bind(Mesh* mesh);
+    
+    void Render();
 };
 
 class World
@@ -46,8 +51,6 @@ class World
     int GetIndex(int x, int y, int z);
 
     void Place(int x, int y, int z, glm::vec4 colour);
-
-    void Render();
 
     static World* LoadWorld(const char* path);
 };

@@ -3,6 +3,7 @@ project(other VERSION 1 DESCRIPTION "Other")
 add_library(other STATIC
 	AtulPwd.cpp
 	fileio.cpp
+    gmfc_image.cpp
 )
 
 target_include_directories(other

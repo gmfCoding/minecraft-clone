@@ -28,10 +28,9 @@ public:
         Example6    = 0b01000000,
         Example7    = 0b10000000 };
 
-    unsigned char flags;
+    mutable unsigned char flags;
 
     MeshRenderer* renderer;
-    Shader* shader;
 
 public:
     glm::vec3* PtrPosition();
@@ -39,21 +38,21 @@ public:
     glm::quat* PtrRotation();
     glm::mat4* PtrTransform();
 
-    glm::vec3 GetPosition();
-    glm::vec3 GetScale();
-    glm::quat GetRotation();
-    glm::mat4 GetTransform();
+    glm::vec3 GetPosition() const;
+    glm::vec3 GetScale() const;
+    glm::quat GetRotation() const;
+    glm::mat4 GetTransform() const;
 
     void SetPosition(glm::vec3 pos);
     void SetScale(glm::vec3 pos);
     void SetRotation(glm::quat pos);
     void SetMatrix(glm::mat4 mat);
 
-    void UpdateTransform();
+    void UpdateTransform() const;
 
 
     Object();
-    glm::mat4 transform;
+    mutable glm::mat4 transform;
     
 protected:
     glm::vec3 position;

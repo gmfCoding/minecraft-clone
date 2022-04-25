@@ -72,6 +72,7 @@
         "xtree": "cpp",
         "xutility": "cpp",
         "shader": "hlsl",
-        "*.json": "jsonc"
+        "*.json": "jsonc",
+        "*.rh": "cpp"
     }
 }

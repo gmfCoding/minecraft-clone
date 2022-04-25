@@ -13,13 +13,17 @@ struct MeshRenderer
 {
     GLuint vao;
     GLsizei size;
+    GLuint texture;
     Mesh* mesh;
     const std::string& materialName;
+    Shader* shader;
 
     MeshRenderer(const std::string& material) : materialName(material)
     {
 
     }
+
+    void Render();
 
     void Bind(Mesh* mesh);
 };
@@ -38,13 +42,14 @@ class Shader {
 
 class Renderer {
     public:
-    static std::map<std::string, Shader> shaders;
-
     static Camera* camera;
+    
+    static void RenderObject(const Object* object);
+};
 
-    static void CreateProgram(const std::string& name, const std::string& vertexPath, const std::string&  fragmentPath);
-    static void DebugShaderInfo(GLuint shader);
-    static void DebugProgramInfo(GLuint program);
+using Index = unsigned int;
 
-    static void RenderObject(Object* object);
+struct Vertex {
+    glm::vec3  position;
+    glm::vec2  texcoord;
 };

@@ -45,7 +45,7 @@
             "windows": {
                 "program": "C:\\Program Files\\RenderDoc\\qrenderdoc.exe",
                 "args": [
-                    "${workspaceRoot}\\app\\app.exe"
+                    "${workspaceRoot}\\build\\app.exe"
                 ]
             }
         },
