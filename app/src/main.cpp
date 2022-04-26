@@ -31,6 +31,10 @@
 
 #include "GizmoLine.hpp"
 
+
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include <stb_image_write.h>
+
 class Mineclone : public Engine {
 
     PlayerMove playerMove{};
@@ -75,7 +79,13 @@ class Mineclone : public Engine {
 
         fstfImages.insert({COMMONPATH("red"), COMMONPATH("green"), COMMONPATH("blue"),  COMMONPATH("pink")});
 
-        TextureManager::CreateAtlasFromFiles(textures);
+        int pixelsX = 0;
+        int pixelsY = 0;
+        PixelData* atlas = nullptr;
+        std::map<std::string, RectUV> uvMap;
+
+        TextureManager::CreateAtlasFromFiles(textures, pixelsX, pixelsY, atlas, uvMap);
+        stbi_write_png("stbpng.png", pixelsX, pixelsY, 4, (&atlas[0].r), pixelsX * 4);
         
         input.onMouseChangedArr.push_back([this](void* _input){ playerController->OnMouseInput(_input);});
 
