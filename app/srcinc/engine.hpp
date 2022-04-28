@@ -15,19 +15,9 @@ class Engine {
     double deltaTime;
     double targetFPS = 60.0;
 
-    enum KeyMode{
-        Release,
-        Press,
-        Hold,
-        None
-    };
+    int width = 800;
+    int height = 600;
 
-    #define RECKEY_COUNT 120
-    KeyMode _keyStateBuffer1[RECKEY_COUNT] = {KeyMode::None};
-    KeyMode _keyStateBuffer2[RECKEY_COUNT] = {KeyMode::None};
-
-    KeyMode* keyStateCurrent;
-    KeyMode* keyStatePrevious;
     bool onKeyUpdate;
 
     Input input;

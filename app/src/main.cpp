@@ -29,6 +29,10 @@
 
 #include "GizmoLine.hpp"
 
+#include "imgui.h"
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_opengl3.h"
+
 Mesh* GenerateCubeMesh()
 {
     Mesh* mesh = new Mesh();
@@ -165,7 +169,7 @@ class Mineclone : public Engine {
         
         input.onMouseChangedArr.push_back([this](void* _input){ playerController->OnMouseInput(_input);});
 
-        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED); 
+        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL); 
 
         //world = World::LoadWorld("world-imports/single.json");
         world = World::LoadWorld("world-imports/grasswater.json");
@@ -209,23 +213,20 @@ class Mineclone : public Engine {
 
 
     void Update() override {
+        glClearColor(clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w, clear_color.w);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        // Start the Dear ImGui frame
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplGlfw_NewFrame();
+        ImGui::NewFrame();
+
+
         Input();
         playerController->Control(playerMove);
-        glClearColor(235/255, 171/255, 87/255, 1.0);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
         float rotation = glfwGetTime();
         Renderer::camera->UpdateView();
 
-
-        //posXCube->SetScale(glm::vec3(glfwGetTime() / 20.0, glfwGetTime() / 20.0, glfwGetTime() / 20.0));
-
-        //cubie->SetScale(glm::vec3(1.0 / glfwGetTime(),1.0 / glfwGetTime(),1.0 / glfwGetTime()));
-        // Renderer::RenderObject(cubie);
-        // Renderer::RenderObject(posXCube);
-        // Renderer::RenderObject(negXCube);
-        // Renderer::RenderObject(posYCube);
-        // Renderer::RenderObject(negYCube);
-        // Renderer::RenderObject(posZCube);
         Renderer::RenderObject(negZCube);
 
         line1->setMVP(Renderer::camera->projection * Renderer::camera->view);
@@ -235,45 +236,91 @@ class Mineclone : public Engine {
         line1->draw(Renderer::camera);
         line2->draw(Renderer::camera);
         line3->draw(Renderer::camera);
-
-        // world->transform = glm::translate(glm::vec3(0,0,glfwGetTime()));
+        
         ie.Update();
         
         
         world->renderer->Render();
 
 
-        glfwSwapBuffers(window);
-
-        KeyMode* tmp = keyStateCurrent;
-        // switch buffers
-        keyStateCurrent = keyStatePrevious;
+        ImGUIExample();
 
 
-        for (size_t i = 0; i < RECKEY_COUNT; i++)
-        {
-            if (keyStateCurrent[i] == KeyMode::Press)
-            { keyStateCurrent[i] == KeyMode::Hold; continue; }
+        ImGui::Render();
+        int display_w, display_h;
+        glfwGetFramebufferSize(window, &display_w, &display_h);
+        glViewport(0, 0, display_w, display_h);
 
-            keyStateCurrent[i] == KeyMode::None;
-        }
-        
-        
-        keyStatePrevious = keyStateCurrent;
-        glfwPollEvents();    
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
+        glfwSwapBuffers(window);  
     }
 
+    bool show_demo_window = true;
+    bool show_another_window = false;
+    ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+
+    void ImGUIExample()
+    {
+        // 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
+        if (show_demo_window)
+            ImGui::ShowDemoWindow(&show_demo_window);
+
+        // 2. Show a simple window that we create ourselves. We use a Begin/End pair to created a named window.
+        {
+            static float f = 0.0f;
+            static int counter = 0;
+
+            ImGui::Begin("Hello, world!");                          // Create a window called "Hello, world!" and append into it.
+
+            ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
+            ImGui::Checkbox("Demo Window", &show_demo_window);      // Edit bools storing our window open/close state
+            ImGui::Checkbox("Another Window", &show_another_window);
+
+            ImGui::SliderFloat("float", &f, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
+            ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
+
+            if (ImGui::Button("Button"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
+                counter++;
+            ImGui::SameLine();
+            ImGui::Text("counter = %d", counter);
+
+            ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+            ImGui::End();
+        }
+
+        // 3. Show another simple window.
+        if (show_another_window)
+        {
+            ImGui::Begin("Another Window", &show_another_window);   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
+            ImGui::Text("Hello from another window!");
+            if (ImGui::Button("Close Me"))
+                show_another_window = false;
+            ImGui::End();
+        }
+    }
+
+    bool hideMouse = false;
     void Input()
     {
         if(onKeyUpdate)
         {
-#define KEYCONTROL(keyId, bvar) if(keyStateCurrent[GLFW_KEY_##keyId] == KeyMode::Press || keyStateCurrent[GLFW_KEY_##keyId] == KeyMode::Hold) { bvar = true;} else{bvar = false;}
+#define KEYCONTROL(keyId, bvar) if(input.isKeyHeld(KeyCode::KEY_##keyId)) { bvar = true;} else{bvar = false;}
             KEYCONTROL(A,playerMove.Left)
             KEYCONTROL(S,playerMove.Backwards)
             KEYCONTROL(D,playerMove.Right)
             KEYCONTROL(W,playerMove.Forward)
             KEYCONTROL(Q,playerMove.Down)
             KEYCONTROL(E,playerMove.Up)
+
+
+            if(input.isKeyDown(KeyCode::KEY_ESCAPE))
+            {
+                hideMouse = !hideMouse;
+
+                glfwSetInputMode(window, GLFW_CURSOR, hideMouse ? GLFW_CURSOR_DISABLED: GLFW_CURSOR_NORMAL); 
+                input.MouseIgnoreNextDelta();
+            }
         }
     }
 };

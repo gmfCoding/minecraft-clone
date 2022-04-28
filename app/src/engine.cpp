@@ -6,6 +6,11 @@
 #include "Rendering.hpp"
 #include <GLFW/glfw3.h>
 
+
+#include "imgui.h"
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_opengl3.h"
+
 #define def_getcursorposfun
 typedef void (* getcursorposfun)(GLFWwindow*, double*,double*);
 Engine *currentEngine;
@@ -26,23 +31,19 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 }
 
 void Engine::engine_key_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
-    if (key >= RECKEY_COUNT)
+
+    if (key >= INPUT_KEYCOUNT || action == GLFW_REPEAT)
     {
         return;
     }
     
     onKeyUpdate = true;
-    if(action == GLFW_PRESS)
-        keyStateCurrent[key] = KeyMode::Press;
 
-    if(action == GLFW_RELEASE)
-        keyStateCurrent[key] = KeyMode::Release;
+    input.OnKeyboardCallback((KeyCode)key, action == GLFW_PRESS ? KeyState::DOWN : action == GLFW_RELEASE ? KeyState::UP : KeyState::NONE);
 }
 
 void Engine::Start() {
     currentEngine = this;
-    keyStateCurrent = &_keyStateBuffer1[0];
-    keyStatePrevious = &_keyStateBuffer2[0];
 }
 
 void Engine::Update() {
@@ -73,15 +74,33 @@ int Engine::Intialise()
     glfwSetCursorPosCallback(window, cursorpos_callback);  
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO(); (void)io;
+    //io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
+    //io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+
+    // Setup Dear ImGui style
+    ImGui::StyleColorsDark();
+    //ImGui::StyleColorsClassic();
+
+    // Setup Platform/Renderer backends
+    ImGui_ImplOpenGL3_Init("#version 130");
+    ImGui_ImplGlfw_InitForOpenGL(window, true);
+
+
+
     glEnable(GL_DEPTH_TEST);  
     glEnable(GL_CULL_FACE); 
-    glViewport(0, 0, 800, 600);
+    glViewport(0, 0, this->width, this->width);
     // During init, enable debug output
     glEnable(GL_DEBUG_OUTPUT);
     // glDebugMessageCallback( MessageCallback, nullptr);
     this->Start();
     double lasttime = glfwGetTime();
+
     while(!glfwWindowShouldClose(window)) {
+        input.Refresh();
         deltaTime =  glfwGetTime() - timeLastFrame;
         timeLastFrame = glfwGetTime();
         this->Update();
@@ -90,6 +109,8 @@ int Engine::Intialise()
             // TODO: Put the thread to sleep, yield, or simply do nothing
         }
         lasttime += 1.0/targetFPS;
+
+        glfwPollEvents();  
     }
     glfwTerminate();
     return 0;

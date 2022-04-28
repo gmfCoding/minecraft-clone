@@ -2,6 +2,7 @@
 #include <map>
 #include "MaterialSystem.hpp"
 #include "fileio.hpp"
+#include "gldebug.hpp"
 
 std::map<std::string, Material*> MaterialSystem::materialMap = std::map<std::string, Material*>();
 void MaterialSystem::AddMaterial(Material* material)
@@ -11,32 +12,32 @@ void MaterialSystem::AddMaterial(Material* material)
 
 GLuint MaterialSystem::CreateVFProgram(const std::string& vertexPath, const std::string& fragmentPath)
 {
-    GLuint vertShader = glCreateShader(GL_VERTEX_SHADER);
-    GLuint fragShader = glCreateShader(GL_FRAGMENT_SHADER);
+    GLCall(GLuint vertShader = glCreateShader(GL_VERTEX_SHADER));
+    GLCall(GLuint fragShader = glCreateShader(GL_FRAGMENT_SHADER));
 
     std::string vertShaderStr = readFile(vertexPath);
     std::string fragShaderStr = readFile(fragmentPath);
     const char *vertShaderSrc = vertShaderStr.c_str();
     const char *fragShaderSrc = fragShaderStr.c_str();
 
-    glShaderSource(vertShader, 1, &vertShaderSrc, NULL);
-    glCompileShader(vertShader);
+    GLCall(glShaderSource(vertShader, 1, &vertShaderSrc, NULL));
+    GLCall(glCompileShader(vertShader));
     DebugShaderInfo(vertShader);
 
-    glShaderSource(fragShader, 1, &fragShaderSrc, NULL);
-    glCompileShader(fragShader);
+    GLCall(glShaderSource(fragShader, 1, &fragShaderSrc, NULL));
+    GLCall(glCompileShader(fragShader));
     DebugShaderInfo(fragShader);
 
-    GLuint program = glCreateProgram();
-    glAttachShader(program, vertShader);
-    glAttachShader(program, fragShader);
-    glLinkProgram(program);
+    GLCall(GLuint program = glCreateProgram());
+    GLCall(glAttachShader(program, vertShader));
+    GLCall(glAttachShader(program, fragShader));
+    GLCall(glLinkProgram(program));
 
     DebugProgramInfo(program);
 
 
-    glDeleteShader(vertShader);
-    glDeleteShader(fragShader);
+    GLCall(glDeleteShader(vertShader));
+    GLCall(glDeleteShader(fragShader));
 
     return program;
 }
