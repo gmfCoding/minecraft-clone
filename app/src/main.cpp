@@ -129,7 +129,6 @@ class Mineclone : public Engine {
     }
 
     void Update() override {
-        
         glClearColor(clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w, clear_color.w);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         // Start the Dear ImGui frame
@@ -158,7 +157,6 @@ class Mineclone : public Engine {
         
         
         world->renderer->Render();
-
 
 
         ImGUIExample();
