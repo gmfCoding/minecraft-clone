@@ -1,5 +1,7 @@
 #pragma once
 #include <glm/vec4.hpp>
+#include <map>
+#include "CommonData.hpp"
 
 class Renderer;
 class Mesh;
@@ -7,9 +9,12 @@ class World;
 
 struct Block
 {
-    glm::vec4 colour;
+    public:
+    int blockID;
 
-    Block() : colour(glm::vec4(0)) {}
+    Block() {
+
+    }
 };
 
 class ChunkRenderer : public MeshRenderer {
@@ -50,7 +55,7 @@ class World
 
     int GetIndex(int x, int y, int z);
 
-    void Place(int x, int y, int z, glm::vec4 colour);
+    void Place(int x, int y, int z, int32_t colour);
 
     static World* LoadWorld(const char* path);
 };

@@ -15,6 +15,7 @@ World.cpp
 GizmoLine.cpp
 Blocks.cpp
 TextureManager.cpp
+CommonData.cpp
 )
 
 list(TRANSFORM LSOURCE PREPEND "${CMAKE_CURRENT_SOURCE_DIR}/")

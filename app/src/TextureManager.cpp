@@ -8,30 +8,74 @@ std::map<std::string, int> TextureManager::imageToGpuID;
 
 // TODO: 
 // Does loading G:\Example\resources\textures\x.png and loading resources\textures\x.png count as two seperate images within our maps?
-std::tuple<unsigned int, Image*> TextureManager::LoadTextureGPU(std::string path)
+std::tuple<unsigned int, Image*> TextureManager::LoadTextureGPU(const std::string& path)
 {
     if(images.count(path) != 1)
     {
         images[path] = new Image();
+        
         Image* image = images[path];
         image->Load(path);
 
-        unsigned int texture;
-        glGenTextures(1, &texture);  
-        glBindTexture(GL_TEXTURE_2D, texture);
 
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, image->width, image->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, image->c_data);
-        glGenerateMipmap(GL_TEXTURE_2D);
+        GLuint texture = UploadNamedTexture(image, path);
 
         return std::tuple<unsigned int, Image*>(texture, image);
     }
-    else{
+    else
+    {
         return std::tuple<unsigned int, Image*>(imageToGpuID[path], images[path]);
     }
 }
 
+GLuint TextureManager::UploadTexture(Image* image)
+{
+    unsigned int texture;
+    glGenTextures(1, &texture);  
+    glBindTexture(GL_TEXTURE_2D, texture);
+
+    GLenum format = GL_RED;
+
+    switch (image->channels)
+    {
+        case 1:
+            format = GL_RG;
+            break;
+        case 2:
+            format = GL_RG;
+            break;
+        case 3:
+            format = GL_RGB;
+            break;
+        case 4:
+            format = GL_RGBA;
+            break;
+        default:
+            break;
+    }
+
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, image->width, image->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, image->c_data);
+    glGenerateMipmap(GL_TEXTURE_2D);
+    return texture;
+}
 
 
+GLuint TextureManager::GetNamedTexture(const std::string& name)
+{
+    return imageToGpuID[name];
+}
+
+GLuint TextureManager::UploadNamedTexture(Image* image, const std::string& name)
+{
+    GLuint texID = UploadTexture(image);
+    MapGPUTexture(texID, name);
+    return texID;
+}
+
+void TextureManager::MapGPUTexture(GLuint textureID, const std::string& name)
+{
+    imageToGpuID[name] = textureID;
+}
 
 void TextureManager::CreateAtlasFromFiles(std::set<std::string> files, int &pixelsX, int &pixelsY, PixelData* &pixels, std::map<std::string, RectUV> &uvTrackMap)
 {    
@@ -77,7 +121,8 @@ void TextureManager::CreateAtlasFromFiles(std::set<std::string> files, int &pixe
             const PixelData* data = loadedImages[index]->c_data;
 
             std::string fp = filePaths[index];
-            uvTrackMap.insert({fp, RectUV(glm::vec2(size * j,     size * k), glm::vec2(size * j,     size * (k + 1)), glm::vec2(size * (j+1), size * (k + 1)), glm::vec2(size * (j+1), size * k), size)});
+            // p_topRight, glm::vec2 p_topLeft, glm::vec2 p_bottomRight, glm::vec2 p_bottomLeft,
+            uvTrackMap.insert({fp, RectUV(glm::vec2(size * float(j + 1),     size * float(k)), glm::vec2(size * j,     size * float(k)), glm::vec2(size * (j+1), size * float(k + 1)), glm::vec2(size * j, size * float(k + 1)), float(sizeA))});
 
             for (size_t sY = 0; sY < size; sY++)
             {

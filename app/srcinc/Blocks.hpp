@@ -4,47 +4,37 @@
 #include <string>
 #include <vector>
 #include <set>
+#include "CommonData.hpp"
+
+using namespace block;
 
 class Blocks
-{
-    public:
-    enum FACE
-    {
-        NONE=0, 		// 0xb000000
-        PYT=1,  		// 0xb100000
-        NYB=2,  		// 0xb010000
-        NZF=4,			// 0xb001000
-        PZB=8,			// 0xb000100
-        NXL=16,			// 0xb000010
-        PXR=32,			// 0xb000001
-        SIDES=120,		// 0xb001111
-        TOPBOTTOM=3,	// 0xb110000
-        ALL=63			// 0xb111111       
-    };
-
-    
-
+{    
+public:
     class BlockConfig {
         public:
         const std::string name;
         const int col_id;
         //const FACE textures = FACE::NONE;
-        std::map<FACE, std::string> faceFiles;
+        std::map<FACE, std::string>* faceFiles;
         const std::map<FACE, int> animated;
         std::vector<std::string> textureFiles;
         int textures;
 
-        BlockConfig(const std::string& p_name, int p_col_id, int p_textures, std::initializer_list<std::string> p_textureFiles);
+        BlockConfig(const std::string& p_name, int p_col_id, int p_textures, std::vector<std::string> p_textureFiles);
     };
     
     static std::map<int, std::string> blockIDToName;
     static std::map<std::string, int> blockNameToID;
     static std::map<int, Blocks::BlockConfig*> blockIDToConfig;
+    static std::map<std::string, RectUV>* worldTextureUVMap;
     static bool blocksInitialised;
 
     static void InitialiseBlocks();
 
     static std::set<std::string> GetTextureNames();
+
+    static RectUV GetUVForFace(FACE face, int blockID);
 };
 
 // std::map<int, std::string> Blocks::blockIDToName;

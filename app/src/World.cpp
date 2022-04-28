@@ -9,7 +9,8 @@
 #include "Rendering.hpp"
 #include "TextureManager.hpp"
 #include "MaterialSystem.hpp"
-
+#include "CommonData.hpp"
+#include "Blocks.hpp"
 
 #include <glm/gtc/type_ptr.hpp>
 
@@ -41,23 +42,11 @@ int World::GetIndex(int x, int y, int z)
     return x * sizeY * sizeZ + y * sizeZ + z;
 }
 
-void World::Place(int x, int y, int z, glm::vec4 colour)
+void World::Place(int x, int y, int z, int32_t blockID)
 {
-    map[GetIndex(x, y, z)].colour = colour;
+    map[GetIndex(x, y, z)].blockID = blockID;
 }
 
-struct VoxelData
-{
-    int x;
-    int y;
-    int z;
-    int pallet;
-};
-
-struct VoxelVertexData {
-    glm::vec3 position;
-    glm::vec2 uv;
-};
 
 class Object;
 
@@ -88,7 +77,7 @@ World *World::LoadWorld(const char *path)
     for (size_t i = 0; i < voxels.size(); i++)
     {
         int64_t col = j["palette"][voxels[i][3]];
-        world->Place(voxels[i][0], voxels[i][1], voxels[i][2], ConvertHEXtoRGBA(col));
+        world->Place(voxels[i][0], voxels[i][1], voxels[i][2], col);
     }
 
     world->renderer->Regenerate();
@@ -110,9 +99,11 @@ void ChunkRenderer::Regenerate()
     auto uvs = &(mesh->uvs);
     auto tmpIdx = 0;
 
+#define ConvertRGBAtoHEX(vec) ((int(vec.x * 255) & 0xff) << 24) + ((int(vec.y * 255) & 0xff) << 16) + ((int(vec.z * 255) & 0xff) << 8) + (int(vec.w * 255) & 0xff);
+
 #define BLOCK(x, y, z) world->map[world->GetIndex(x, y, z)]
 #define INRANGE(ind) ind >= 0 && ind < world->sizeXYZ
-#define NVALID(b) world->map[world->GetIndex(b.x, b.y, b.z)].colour.w <= 0.0f
+#define NVALID(b) world->map[world->GetIndex(b.x, b.y, b.z)].blockID == 0
 
 #define FACE(d, cond, x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4) \
 tmpIdx = world->GetIndex(d.x, d.y, d.z);                          \
@@ -129,11 +120,18 @@ if (cond || (INRANGE(tmpIdx) && NVALID(d)))                       \
     indices->push_back(o);                                        \
     indices->push_back(o + 3);                                    \
     indices->push_back(o + 2);                                    \
-    uvs->push_back(glm::vec2(0.0, 0.0));                          \
-    uvs->push_back(glm::vec2(0.0, 1.0));                          \
-    uvs->push_back(glm::vec2(1.0, 1.0));                          \
-    uvs->push_back(glm::vec2(1.0, 0.0));                          \
+    RectUV rectuvs = Blocks::GetUVForFace(block::GLMVecToFACE(d - t), b.blockID);\
+    uvs->push_back(rectuvs.bottomRight);\
+    uvs->push_back(rectuvs.topRight);\
+    uvs->push_back(rectuvs.topLeft);\
+    uvs->push_back(rectuvs.bottomLeft);\
 }
+
+
+    // uvs->push_back(glm::vec2(0.0, 0.0));                          \
+    // uvs->push_back(glm::vec2(0.0, 1.0));                          \
+    // uvs->push_back(glm::vec2(1.0, 1.0));                          \
+    // uvs->push_back(glm::vec2(1.0, 0.0));                          \
 
     for (size_t x = 0; x < world->sizeX; x++)
     {
@@ -143,11 +141,14 @@ if (cond || (INRANGE(tmpIdx) && NVALID(d)))                       \
             {
                 Block b = BLOCK(x, y, z);
                 // If the block is "air" continue/skip.
-                if (b.colour.w <= 0.0f)
+                if (b.blockID == 0)
                 {
                     continue;
                 }
 
+                //(((b.colour.x * 255) & 0xff) << 24) + (((b.colour.y * 255.0f) & 0xff) << 16) + (((b.colour.z * 255.0f) & 0xff) << 8) + ((b.colour.w * 255.0f) & 0xff);
+
+                glm::vec3 t = glm::vec3(x, y, z);
                 glm::vec3 a = glm::vec3(x, y + 1, z);
                 glm::vec3 u = glm::vec3(x, y - 1.0f, z);
                 glm::vec3 n = glm::vec3(x, y, z + 1);
@@ -157,11 +158,12 @@ if (cond || (INRANGE(tmpIdx) && NVALID(d)))                       \
 
                 // Generate Faces for each block, with conditions if those faces should be created.
                 FACE(a, a.y >= world -> sizeY, x, y + 1, z,     x + 1, y + 1, z,    x + 1, y + 1, z + 1,    x, y + 1, z + 1)
-                
                 FACE(n, n.z >= world -> sizeZ, x, y, z + 1,     x, y + 1, z + 1,    x + 1, y + 1, z + 1,    x + 1, y, z + 1)
-                FACE(e, e.x >= world -> sizeX, x + 1, y, z,     x + 1, y, z + 1,    x + 1, y + 1, z + 1,    x + 1, y + 1, z);
 
-                FACE(s, s.z == -1,             x, y, z,     x + 1, y, z,    x + 1, y + 1, z,   x, y + 1, z)
+                //FACE(e, e.x >= world -> sizeX, x + 1, y, z,     x + 1, y, z + 1,    x + 1, y + 1, z + 1,    x + 1, y + 1, z);
+                FACE(e, e.x >= world -> sizeX, x + 1, y, z+1,     x + 1, y+1, z + 1,    x + 1, y + 1, z,    x + 1, y, z);
+                FACE(s, s.z == -1,             x, y, z,     x, y+1, z,    x + 1, y + 1, z,   x + 1, y, z)
+
                 FACE(w, w.x == -1,             x, y, z,     x, y + 1, z,    x, y + 1, z + 1,   x, y, z + 1);
                 FACE(u, u.y == -1,             x, y, z,     x, y, z + 1,    x + 1, y, z + 1,   x + 1, y, z);
             }
@@ -276,7 +278,7 @@ void ChunkRenderer::Render()
     
 
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, texture);
+    glBindTexture(GL_TEXTURE_2D, TextureManager::GetNamedTexture("worldatlas"));
     
     glUniform1i(uniTexture, 0);
 

@@ -31,6 +31,10 @@
 
 #include "GizmoLine.hpp"
 
+#include "imgui.h"
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_opengl3.h"
+
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include <stb_image_write.h>
@@ -47,7 +51,10 @@ class Mineclone : public Engine {
     GizmoLine* line2;
     GizmoLine* line3;
 
-    Image image;
+    Image* image;
+    ImageExample ie;
+
+    std::map<std::string, RectUV> uvMap;
 
     void Start() override {
         Engine::Start();
@@ -82,21 +89,28 @@ class Mineclone : public Engine {
         int pixelsX = 0;
         int pixelsY = 0;
         PixelData* atlas = nullptr;
-        std::map<std::string, RectUV> uvMap;
-
+        
         TextureManager::CreateAtlasFromFiles(textures, pixelsX, pixelsY, atlas, uvMap);
-        stbi_write_png("stbpng.png", pixelsX, pixelsY, 4, (&atlas[0].r), pixelsX * 4);
+        Blocks::worldTextureUVMap = &uvMap;
+
+        image = new Image(atlas, pixelsX, pixelsY, 4);
+
+        GLuint textureID = TextureManager::UploadNamedTexture(image, "worldatlas");
+        ie.Init(textureID);
+
+        //stbi_write_png("stbpng.png", pixelsX, pixelsY, 4, (&atlas[0].r), pixelsX * 4);
         
         input.onMouseChangedArr.push_back([this](void* _input){ playerController->OnMouseInput(_input);});
 
-        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED); 
+        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL); 
 
+        
         //world = World::LoadWorld("world-imports/single.json");
         world = World::LoadWorld("world-imports/grasswater.json");
+        
         //world = World::LoadWorld("world-imports/desolateisland.json");
         world->transform = glm::translate(glm::vec3(1,0,1));
         glm::mat4 mat4id = glm::mat4(1.0);
-
     }
 
 
@@ -115,65 +129,116 @@ class Mineclone : public Engine {
     }
 
     void Update() override {
+        
+        glClearColor(clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w, clear_color.w);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        // Start the Dear ImGui frame
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplGlfw_NewFrame();
+        ImGui::NewFrame();
+
 
         Input();
         playerController->Control(playerMove);
 
-        glClearColor(135/255.0f, 206/255.0f, 235/255.0f, 1.0);
-
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        
-        float time = glfwGetTime();
+        float rotation = glfwGetTime();
         Renderer::camera->UpdateView();
 
 
-        #pragma region RENDER_3D_GIZMO
-            line1->setMVP(Renderer::camera->projection * Renderer::camera->view);
-            line2->setMVP(Renderer::camera->projection * Renderer::camera->view);
-            line3->setMVP(Renderer::camera->projection * Renderer::camera->view);
+        line1->setMVP(Renderer::camera->projection * Renderer::camera->view);
+        line2->setMVP(Renderer::camera->projection * Renderer::camera->view);
+        line3->setMVP(Renderer::camera->projection * Renderer::camera->view);
 
-            line1->draw(Renderer::camera);
-            line2->draw(Renderer::camera);
-            line3->draw(Renderer::camera);
-        #pragma endregion
-
+        line1->draw(Renderer::camera);
+        line2->draw(Renderer::camera);
+        line3->draw(Renderer::camera);
+        
+        ie.Update();
+        
+        
         
         world->renderer->Render();
 
 
-        EndUpdate();
+
+        ImGUIExample();
+
+
+        ImGui::Render();
+        int display_w, display_h;
+        glfwGetFramebufferSize(window, &display_w, &display_h);
+        glViewport(0, 0, display_w, display_h);
+
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
+        glfwSwapBuffers(window);  
     }
 
-    void EndUpdate()
+    bool show_demo_window = true;
+    bool show_another_window = false;
+    ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+
+    void ImGUIExample()
     {
-        glfwSwapBuffers(window);
+        // 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
+        if (show_demo_window)
+            ImGui::ShowDemoWindow(&show_demo_window);
 
-        KeyMode* tmp = keyStateCurrent;
-        keyStateCurrent = keyStatePrevious;
-
-        for (size_t i = 0; i < RECKEY_COUNT; i++)
+        // 2. Show a simple window that we create ourselves. We use a Begin/End pair to created a named window.
         {
-            if (keyStateCurrent[i] == KeyMode::Press)
-            { keyStateCurrent[i] == KeyMode::Hold; continue; }
+            static float f = 0.0f;
+            static int counter = 0;
 
-            keyStateCurrent[i] == KeyMode::None;
+            ImGui::Begin("Hello, world!");                          // Create a window called "Hello, world!" and append into it.
+
+            ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
+            ImGui::Checkbox("Demo Window", &show_demo_window);      // Edit bools storing our window open/close state
+            ImGui::Checkbox("Another Window", &show_another_window);
+
+            ImGui::SliderFloat("float", &f, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
+            ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
+
+            if (ImGui::Button("Button"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
+                counter++;
+            ImGui::SameLine();
+            ImGui::Text("counter = %d", counter);
+
+            ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+            ImGui::End();
         }
-        
-        keyStatePrevious = keyStateCurrent;
-        glfwPollEvents();   
+
+        // 3. Show another simple window.
+        if (show_another_window)
+        {
+            ImGui::Begin("Another Window", &show_another_window);   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
+            ImGui::Text("Hello from another window!");
+            if (ImGui::Button("Close Me"))
+                show_another_window = false;
+            ImGui::End();
+        }
     }
 
+    bool hideMouse = false;
     void Input()
     {
         if(onKeyUpdate)
         {
-#define KEYCONTROL(keyId, bvar) if(keyStateCurrent[GLFW_KEY_##keyId] == KeyMode::Press || keyStateCurrent[GLFW_KEY_##keyId] == KeyMode::Hold) { bvar = true;} else{bvar = false;}
+#define KEYCONTROL(keyId, bvar) if(input.isKeyHeld(KeyCode::KEY_##keyId)) { bvar = true;} else{bvar = false;}
             KEYCONTROL(A,playerMove.Left)
             KEYCONTROL(S,playerMove.Backwards)
             KEYCONTROL(D,playerMove.Right)
             KEYCONTROL(W,playerMove.Forward)
             KEYCONTROL(Q,playerMove.Down)
             KEYCONTROL(E,playerMove.Up)
+
+
+            if(input.isKeyDown(KeyCode::KEY_ESCAPE))
+            {
+                hideMouse = !hideMouse;
+
+                glfwSetInputMode(window, GLFW_CURSOR, hideMouse ? GLFW_CURSOR_DISABLED: GLFW_CURSOR_NORMAL); 
+                input.MouseIgnoreNextDelta();
+            }
         }
     }
 };

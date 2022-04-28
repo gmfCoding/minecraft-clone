@@ -48,5 +48,6 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
 	other
 	shlwapi
 )
+
 message(STATUS "COPY ${PROJECT_SOURCE_DIR}/app/resources DESTINATION ${CMAKE_CURRENT_BINARY_DIR}")
 file(COPY ${PROJECT_SOURCE_DIR}/app/resources DESTINATION ${CMAKE_CURRENT_BINARY_DIR})

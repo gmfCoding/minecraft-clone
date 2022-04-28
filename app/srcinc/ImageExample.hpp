@@ -24,7 +24,7 @@ private:
 
 public:
     ImageExample();
-    void Init(const Image* image);
+    void Init(const GLuint gpuTexture);
     void Update();
     ~ImageExample();
 };
@@ -47,7 +47,7 @@ bool check_shader_compile_status(GLuint obj) {
     return true;
 }
 
-void ImageExample::Init(const Image* image)
+void ImageExample::Init(const GLuint gpuTexture)
 {
     shader_program = MaterialSystem::materialMap["alt_textured"]->programID;
  
@@ -94,11 +94,10 @@ void ImageExample::Init(const Image* image)
     // "unbind" vao
     glBindVertexArray(0);
 
-    auto [textureID, img] = TextureManager::LoadTextureGPU("resources/textures/sand.png");
-    texture = textureID;
+    texture = gpuTexture;
 
     // bind the texture
-    glBindTexture(GL_TEXTURE_2D, textureID);
+    glBindTexture(GL_TEXTURE_2D, texture);
     // set texture parameters
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
@@ -106,13 +105,6 @@ void ImageExample::Init(const Image* image)
     // Set the filter to nearest
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
-    int width = img->width;
-    int height = img->height;
-    
-    // set texture content
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, img->c_data);
-    glGenerateMipmap(GL_TEXTURE_2D);
 }
 
 void ImageExample::Update()
