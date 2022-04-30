@@ -12,7 +12,7 @@ struct Block
     public:
     int blockID;
 
-    Block() {
+    Block() : blockID(0) {
 
     }
 };
@@ -22,6 +22,7 @@ class ChunkRenderer : public MeshRenderer {
     public:
     Mesh* mesh;
     int chunkX, chunkY, chunkZ;
+    RectUV rectuv;
 
     ChunkRenderer(World* _world) : MeshRenderer::MeshRenderer("world")
     {
@@ -32,6 +33,8 @@ class ChunkRenderer : public MeshRenderer {
 
 
     void Bind(Mesh* mesh);
+
+    void SetVerticesUV(Mesh* mesh, RectUV uv);
     
     void Render();
 };

@@ -1,6 +1,7 @@
 #include "Material.hpp"
 #include "MaterialSystem.hpp"
-
+#include <map>
+#include <any>
 #include "LoadGlad.h"
 
 void Material::Setup() {
@@ -10,7 +11,6 @@ void Material::Setup() {
 void Material::Bind() {
     glUseProgram(this->programID);
 }
-
 
 Material::Material(const std::string _materialName) : materialName(_materialName)
 {
@@ -22,22 +22,8 @@ VertexFragmentCombinationMaterial::VertexFragmentCombinationMaterial(const std::
     programID = MaterialSystem::CreateVFProgram(vertexPath, fragmentPath);
 }
 
-std::vector<glm::vec2> VertexMaterial::GenerateUVs(int32_t colour)
+bool MaterialProperties::HasValue(const std::string& name)
 {
-    size_t index = this->colourIndexMap[colour];
-    float fidx = (float)index;
-    std::vector<glm::vec2> coords = std::vector<glm::vec2>{
-        glm::vec2(fidx - 1.0f, 0.f),
-        glm::vec2(fidx - 1.0f, 1.0f),
-        glm::vec2(fidx, 0.0f),
-        glm::vec2(fidx,1.0f)
-    };
-
-    return coords;
+    std::map<std::string, std::any>::iterator it = this->properties.find(name);
+    return it != this->properties.end();
 }
-
-VertexMaterial::VertexMaterial(std::vector<int32_t> _colours) : VertexFragmentCombinationMaterial("VoxelMat", "./shaders/world_vert.shader", "./shaders/world_frag.shader")
-{
-    
-}
-

@@ -50,75 +50,75 @@ void Renderer::RenderObject(const Object* object)
 }
 
 void MeshRenderer::Bind(Mesh* mesh)    {
+    bool hasUVs = mesh->uvs.size() >= 1 && mesh->uvs.size() == mesh->vertices.size();
 
-    std::vector<Vertex> vertices;
-    std::vector<Index> indices;
-    bool hasUVs = false;
+    if(vao == -1) 
+    {
+        GLCall(glGenVertexArrays(1, &vao)); // Vertex  Array  Object
+        GLCall(glGenBuffers(1, &vbo)); // Vertex  Buffer Object (temp)
+        GLCall(glGenBuffers(1, &ibo)); // Element Buffer Object (temp)
+    }
 
+    GLCall(glBindVertexArray(vao));
+    GLCall(glBindBuffer(GL_ARRAY_BUFFER, vbo));
+
+    SetVertices(mesh);
+    SetIndices(mesh);
+
+
+    GLCall(glBindVertexArray(0));
+}
+
+void MeshRenderer::SetVertices(Mesh* mesh)
+{
+    GLCall(glBindVertexArray(vao));
+    GLCall(glBindBuffer(GL_ARRAY_BUFFER, vbo));
+    
+    // Contains UV's
     if(mesh->uvs.size() >= 1 && mesh->uvs.size() == mesh->vertices.size())
     {
-        hasUVs = true;
+        std::vector<Vertex> vertices_uv;
         for (size_t i = 0; i < mesh->vertices.size(); i++)
         {
-            vertices.push_back({mesh->vertices[i], mesh->uvs[i]});
+            vertices_uv.push_back({mesh->vertices[i], mesh->uvs[i]});
         }
+        GLCall(glBufferData(GL_ARRAY_BUFFER, vertices_uv.size() * sizeof(Vertex), vertices_uv.data(), GL_STATIC_DRAW)); 
+        // Location of position
+        GLCall(glEnableVertexAttribArray(0));
+        GLCall(glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), 0));
+        // Location of Texcoords
+        GLCall(glEnableVertexAttribArray(1));
+        GLCall(glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<const void*>(offsetof(Vertex, texcoord))));
     }
+    // No UV's
     else
     {
-        for(auto v : mesh->vertices)
-        {
-            vertices.push_back({v, {0,0}});
-        }
+        GLCall(glBufferData(GL_ARRAY_BUFFER, mesh->vertices.size() * sizeof(glm::vec3), mesh->vertices.data(), GL_STATIC_DRAW));
+        GLCall(glEnableVertexAttribArray(0));
+        GLCall(glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), 0));
     }
+}
+
+
+
+
+void MeshRenderer::SetIndices(Mesh* mesh)
+{
+    std::vector<Index> indices;
 
     for(auto i : mesh->indices)
     {
         indices.push_back(i);
     }
-    
-    size = mesh->indices.size();
 
-    GLuint vbo, ibo;
-    GLCall(glGenVertexArrays(1, &vao)); // Vertex  Array  Object
-    GLCall(glGenBuffers(1, &vbo)); // Vertex  Buffer Object (temp)
-    GLCall(glGenBuffers(1, &ibo)); // Element Buffer Object (temp)
+    size = indices.size();
 
-    GLCall(glBindVertexArray(vao));
-    GLCall(glBindBuffer(GL_ARRAY_BUFFER, vbo));
-
-    if(hasUVs)
-    {
-        GLCall(glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), vertices.data(), GL_STATIC_DRAW));    
-    }
-    else 
-    {
-        GLCall(glBufferData(GL_ARRAY_BUFFER, mesh->vertices.size() * sizeof(glm::vec3), mesh->vertices.data(), GL_STATIC_DRAW));
-    }
-        
-    GLCall(glEnableVertexAttribArray(0));
-
-
-    if(hasUVs)
-    {
-        GLCall(glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), 0));
-    }
-    else 
-    {
-        GLCall(glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), 0));
-    }
-
+    // Fill the currently bound GL_ELEMENT_ARRAY_BUFFER buffer (ibo) with the data in indices
     GLCall(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo));
     GLCall(glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(Index), indices.data(), GL_STATIC_DRAW));
-
-    if(hasUVs)
-    {
-        GLCall(glEnableVertexAttribArray(1));
-        GLCall(glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<const void*>(offsetof(Vertex, texcoord))));
-    }
-
-    GLCall(glBindVertexArray(0));
+    //glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLuint) * indices.size(), &indices[0], GL_STATIC_DRAW);
 }
-    
+
 void MeshRenderer::Render()
 {
 

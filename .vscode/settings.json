@@ -74,6 +74,7 @@
         "shader": "hlsl",
         "*.json": "jsonc",
         "*.rh": "cpp",
-        "set": "cpp"
+        "set": "cpp",
+        "any": "cpp"
     }
 }

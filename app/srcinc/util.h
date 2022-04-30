@@ -1,0 +1,1 @@
+#define ConvertHEXtoRGBA(colour) glm::vec4(((colour >> 16) & 0xFF) / 255.0, ((colour >> 8) & 0xFF) / 255.0, ((colour)&0xFF) / 255.0, 1.0f)

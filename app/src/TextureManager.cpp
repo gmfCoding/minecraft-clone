@@ -121,8 +121,12 @@ void TextureManager::CreateAtlasFromFiles(std::set<std::string> files, int &pixe
             const PixelData* data = loadedImages[index]->c_data;
 
             std::string fp = filePaths[index];
-            // p_topRight, glm::vec2 p_topLeft, glm::vec2 p_bottomRight, glm::vec2 p_bottomLeft,
-            uvTrackMap.insert({fp, RectUV(glm::vec2(size * float(j + 1),     size * float(k)), glm::vec2(size * j,     size * float(k)), glm::vec2(size * (j+1), size * float(k + 1)), glm::vec2(size * j, size * float(k + 1)), float(sizeA))});
+            // p_topRight, glm::vec2 p_topLeft, glm::vec2 p_bottomRight, glm::vec2 p_bottomLeft
+
+            // if there was only one image in the atlas data would look like this
+            // glm::vec2(0.0, 0.0), glm::vec2(0.0, 1.0), glm::vec2(1.0, 1.0), glm::vec2(1.0, 0.0)
+
+            uvTrackMap.insert({fp, RectUV(glm::vec2(size * float(j),size * float(k)), glm::vec2(size * j,     size * float(k + 1)), glm::vec2(size * (j+1), size * float(k + 1)), glm::vec2(size * float(j+1), size * k), float(sizeA))});
 
             for (size_t sY = 0; sY < size; sY++)
             {
@@ -140,6 +144,4 @@ void TextureManager::CreateAtlasFromFiles(std::set<std::string> files, int &pixe
     }
 
     loadedImages.clear();
-    // std::cout << "Creating Image:" << sizeA << "x" << sizeA << "@" << 4 << std::endl;
-    // stbi_write_png("stbpng.png", sizeA, sizeA, 4, (&pixels[0].r), sizeA * 4);
 }

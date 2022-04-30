@@ -3,6 +3,7 @@
 #include "MaterialSystem.hpp"
 #include "fileio.hpp"
 #include "gldebug.hpp"
+#include <vector>
 
 std::map<std::string, Material*> MaterialSystem::materialMap = std::map<std::string, Material*>();
 void MaterialSystem::AddMaterial(Material* material)
