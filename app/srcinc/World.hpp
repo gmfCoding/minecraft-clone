@@ -58,5 +58,7 @@ class World
     void Place(int x, int y, int z, int32_t colour);
 
     static World* LoadWorld(const char* path);
+
+    void GenerateFace(glm::ivec3 dir, bool cond, glm::ivec3 offset, int32_t blockID);
 };
 

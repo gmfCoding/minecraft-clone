@@ -94,6 +94,8 @@ World *World::LoadWorld(const char *path)
 
 void ChunkRenderer::Regenerate()
 {
+
+    world->mesh = mesh;
     auto vertices = &(mesh->vertices);
     auto indices = &(mesh->indices);
     auto uvs = &(mesh->uvs);
@@ -148,29 +150,87 @@ if (cond || (INRANGE(tmpIdx) && NVALID(d)))                       \
 
                 //(((b.colour.x * 255) & 0xff) << 24) + (((b.colour.y * 255.0f) & 0xff) << 16) + (((b.colour.z * 255.0f) & 0xff) << 8) + ((b.colour.w * 255.0f) & 0xff);
 
-                glm::vec3 t = glm::vec3(x, y, z);
-                glm::vec3 a = glm::vec3(x, y + 1, z);
-                glm::vec3 u = glm::vec3(x, y - 1.0f, z);
-                glm::vec3 n = glm::vec3(x, y, z + 1);
-                glm::vec3 s = glm::vec3(x, y, z - 1.0f);
-                glm::vec3 e = glm::vec3(x + 1, y, z);
-                glm::vec3 w = glm::vec3(x - 1.0f, y, z);
+                glm::ivec3 t = glm::vec3(x, y, z);
+                glm::ivec3 a = glm::ivec3(0,1,0);
+                glm::ivec3 u = glm::ivec3(0,-1,0);
+                glm::ivec3 n = glm::ivec3(0,0,1);
+                glm::ivec3 s = glm::ivec3(0,0,-1);
+                glm::ivec3 e = glm::ivec3(1,0,0);
+                glm::ivec3 w = glm::ivec3(-1,0,0);
+
 
                 // Generate Faces for each block, with conditions if those faces should be created.
-                FACE(a, a.y >= world -> sizeY, x, y + 1, z,     x + 1, y + 1, z,    x + 1, y + 1, z + 1,    x, y + 1, z + 1)
-                FACE(n, n.z >= world -> sizeZ, x, y, z + 1,     x, y + 1, z + 1,    x + 1, y + 1, z + 1,    x + 1, y, z + 1)
+                world->GenerateFace(a, t.y + a.y >= world->sizeY, t, b.blockID);
+                world->GenerateFace(e, t.x + e.x >= world->sizeX, t, b.blockID);
+                world->GenerateFace(n, t.z + n.z >= world->sizeZ, t, b.blockID);
 
-                //FACE(e, e.x >= world -> sizeX, x + 1, y, z,     x + 1, y, z + 1,    x + 1, y + 1, z + 1,    x + 1, y + 1, z);
-                FACE(e, e.x >= world -> sizeX, x + 1, y, z+1,     x + 1, y+1, z + 1,    x + 1, y + 1, z,    x + 1, y, z);
-                FACE(s, s.z == -1,             x, y, z,     x, y+1, z,    x + 1, y + 1, z,   x + 1, y, z)
+                world->GenerateFace(s, t.z + s.z == -1, t, b.blockID);
+                world->GenerateFace(w, t.x + w.x == -1, t, b.blockID);
+                world->GenerateFace(u, t.y + u.y == -1, t, b.blockID);
 
-                FACE(w, w.x == -1,             x, y, z,     x, y + 1, z,    x, y + 1, z + 1,   x, y, z + 1);
-                FACE(u, u.y == -1,             x, y, z,     x, y, z + 1,    x + 1, y, z + 1,   x + 1, y, z);
+                // FACE(n, n.z >= world -> sizeZ, x, y, z + 1,     x, y + 1, z + 1,    x + 1, y + 1, z + 1,    x + 1, y, z + 1)
+
+                // //FACE(e, e.x >= world -> sizeX, x + 1, y, z,     x + 1, y, z + 1,    x + 1, y + 1, z + 1,    x + 1, y + 1, z);
+                // FACE(e, e.x >= world -> sizeX, x + 1, y, z+1,     x + 1, y+1, z + 1,    x + 1, y + 1, z,    x + 1, y, z);
+                // FACE(s, s.z == -1,             x, y, z,     x, y+1, z,    x + 1, y + 1, z,   x + 1, y, z)
+
+                // FACE(w, w.x == -1,             x, y, z,     x, y + 1, z,    x, y + 1, z + 1,   x, y, z + 1);
+                // FACE(u, u.y == -1,             x, y, z,     x, y, z + 1,    x + 1, y, z + 1,   x + 1, y, z);
             }
         }
     }
 }
 
+
+void World::GenerateFace(glm::ivec3 dir, bool cond, glm::ivec3 pos, int32_t blockID)
+{
+    auto tmpIdx = GetIndex(pos.x + dir.x, pos.y + dir.y, pos.z + dir.z);   
+    if (cond || (tmpIdx >= 0 && tmpIdx < sizeXYZ) && map[GetIndex(pos.x + dir.x, pos.y + dir.y, pos.z + dir.z)].blockID == 0)
+    {
+        auto vertices = &(mesh->vertices);
+        auto indices = &(mesh->indices);
+        auto uvs = &(mesh->uvs);
+
+        glm::vec3 fdir = glm::vec3(dir);
+        glm::vec3 fpos = glm::vec3(pos);
+
+        glm::vec3 zero = glm::vec3(0);
+        glm::vec3 w_up = glm::vec3(0,1,0);
+        glm::vec3 left = glm::cross(glm::vec3(w_up), glm::vec3(dir));
+
+
+        if(fdir == w_up || fdir == -w_up)
+        {
+            left = glm::cross(glm::vec3(1,0,0), fdir);
+        }
+
+        glm::vec3 up = -glm::cross(left, fdir);
+
+
+
+
+        int o = vertices->size();
+
+        
+        vertices->push_back(fpos + (-up + left + fdir) / 2.0f);               
+        vertices->push_back(fpos + (up + left + fdir) / 2.0f);               
+        vertices->push_back(fpos + (up - left + fdir) / 2.0f);               
+        vertices->push_back(fpos + (-up - left + fdir) / 2.0f); 
+
+        indices->push_back(o);                                   
+        indices->push_back(o + 1);                               
+        indices->push_back(o + 2);                               
+        indices->push_back(o);                                   
+        indices->push_back(o + 2);                               
+        indices->push_back(o + 3);      
+
+        RectUV rectuvs = Blocks::GetUVForFace(block::GLMVecToFACE(dir), blockID);
+        uvs->push_back(rectuvs.bottomLeft); 
+        uvs->push_back(rectuvs.topLeft);    
+        uvs->push_back(rectuvs.topRight);   
+        uvs->push_back(rectuvs.bottomRight);
+    }
+}
 
 void ChunkRenderer::Bind(Mesh* mesh)
 {

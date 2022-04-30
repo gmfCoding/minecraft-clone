@@ -152,7 +152,7 @@ class Mineclone : public Engine {
         line2->draw(Renderer::camera);
         line3->draw(Renderer::camera);
         
-        ie.Update();
+        //ie.Update();
         
         
         
