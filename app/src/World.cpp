@@ -35,7 +35,8 @@ World::World(int _sizeX, int _sizeY, int _sizeZ) : sizeX(_sizeX), sizeY(_sizeY),
     }
 
     renderer = new ChunkRenderer(this);
-    renderer->mesh = new Mesh();
+    renderer->m_mesh = new Mesh();
+    renderer->transmesh = new Mesh();
 }
 
 int World::GetIndex(int x, int y, int z)
@@ -80,7 +81,7 @@ World *World::LoadWorld(const char *path)
     }
 
     world->renderer->Regenerate();
-    world->renderer->Bind(world->mesh);
+    world->renderer->Bind(world->renderer->m_mesh);
 
     return world;
 }
@@ -88,13 +89,6 @@ World *World::LoadWorld(const char *path)
 
 void ChunkRenderer::Regenerate()
 {
-
-    world->mesh = mesh;
-    auto vertices = &(mesh->vertices);
-    auto indices = &(mesh->indices);
-    auto uvs = &(mesh->uvs);
-    auto tmpIdx = 0;
-
 #define BLOCK(x, y, z) world->map[world->GetIndex(x, y, z)]
 
     for (size_t x = 0; x < world->sizeX; x++)
@@ -135,14 +129,36 @@ void ChunkRenderer::Regenerate()
 }
 
 bool first = true;
-void World::GenerateFace(glm::ivec3 dir, bool cond, glm::ivec3 pos, int32_t blockID)
+void World::GenerateFace(glm::ivec3 dir, bool edge, glm::ivec3 pos, int32_t blockID)
 {
-    auto tmpIdx = GetIndex(pos.x + dir.x, pos.y + dir.y, pos.z + dir.z);   
-    if (cond || (tmpIdx >= 0 && tmpIdx < sizeXYZ) && map[GetIndex(pos.x + dir.x, pos.y + dir.y, pos.z + dir.z)].blockID == 0)
+    auto nIdx = GetIndex(pos.x + dir.x, pos.y + dir.y, pos.z + dir.z);   
+    bool gen_condition = map[nIdx].blockID == 0;
+    if(!gen_condition && (nIdx >= 0 && nIdx < sizeXYZ))
+    {   
+        Blocks::BlockConfig* ncfg = Blocks::GetConfig(map[nIdx].blockID);
+        // Generate the face if:
+        // It is air (pre setup)
+        // It is trasparent
+        // It is trasparent volume edge 
+        gen_condition = (ncfg->flags & Blocks::BlockConfig::BlockFlags::Transparent) || ((ncfg->flags & Blocks::BlockConfig::BlockFlags::TransparentVol) && (blockID != map[nIdx].blockID));
+    }
+
+    if (edge || gen_condition)
     {
-        auto vertices = &(mesh->vertices);
-        auto indices = &(mesh->indices);
-        auto uvs = &(mesh->uvs);
+        Blocks::BlockConfig* config = Blocks::GetConfig(blockID);
+        RectUV rectuvs = config->GetUVForFace(block::GLMVecToFACE(dir));
+
+        auto vertices = &(renderer->m_mesh->vertices);
+        auto indices = &(renderer->m_mesh->indices);
+        auto uvs = &(renderer->m_mesh->uvs);
+        bool transparent;
+        if(config->flags & Blocks::BlockConfig::BlockFlags::Transparent || config->flags & Blocks::BlockConfig::BlockFlags::TransparentVol)
+        {
+            transparent = true;
+            vertices = &(renderer->transmesh->vertices);
+            indices = &(renderer->transmesh->indices);
+            uvs = &(renderer->transmesh->uvs);
+        }
 
         glm::vec3 fdir = glm::vec3(dir);
         glm::vec3 fpos = glm::vec3(pos);
@@ -162,20 +178,18 @@ void World::GenerateFace(glm::ivec3 dir, bool cond, glm::ivec3 pos, int32_t bloc
 
         int o = vertices->size();
 
-
-        vertices->push_back(fpos + (-up + left + fdir) / 2.0f);
-        vertices->push_back(fpos + (up + left + fdir) / 2.0f );
-        vertices->push_back(fpos + (up - left + fdir) / 2.0f);
-        vertices->push_back(fpos + (-up - left + fdir) / 2.0f); 
+        glm::vec3 offset = fpos + glm::vec3(0.5, 0.5, 0.5);
+        vertices->push_back(offset + (-up + left + fdir) / 2.0f);
+        vertices->push_back(offset + (up + left + fdir) / 2.0f );
+        vertices->push_back(offset + (up - left + fdir) / 2.0f);
+        vertices->push_back(offset + (-up - left + fdir) / 2.0f); 
 
         indices->push_back(o);                                   
         indices->push_back(o + 1);                               
         indices->push_back(o + 2);                               
         indices->push_back(o);                                   
         indices->push_back(o + 2);                               
-        indices->push_back(o + 3);      
-
-        RectUV rectuvs = Blocks::GetUVForFace(block::GLMVecToFACE(dir), blockID);
+        indices->push_back(o + 3); 
 
         uvs->push_back(rectuvs.topRight);
         uvs->push_back(rectuvs.topLeft);
@@ -187,65 +201,54 @@ void World::GenerateFace(glm::ivec3 dir, bool cond, glm::ivec3 pos, int32_t bloc
 
 void ChunkRenderer::Bind(Mesh* mesh)
 {
-#pragma region VAOVBOIBO
-    glBindVertexArray(0);
+    BindOpaque();
+    BindTransparent();
+}
 
-    if(!vao_gen) 
+void ChunkRenderer::BindOpaque() {
+    if(!vao_trans_gen) 
     {
         vao_gen = true;
         vbo_gen = true;
-        GLCall(glGenVertexArrays(1, &vao)); // Vertex  Array  Object
-        GLCall(glGenBuffers(1, &vbo)); // Vertex  Buffer Object (temp)
+        ibo_gen = true;
+        GLCall(glGenVertexArrays(1, &m_vao)); // Vertex  Array  Object
+        GLCall(glGenBuffers(1, &m_vbo)); // Vertex  Buffer Object (temp)
+        GLCall(glGenBuffers(1, &m_ibo)); // Vertex  Buffer Object (temp)
+    }
+    Bind(m_vao, m_vbo, m_ibo, &m_size, m_mesh);
+}
+
+void ChunkRenderer::BindTransparent() {
+    if(!vao_trans_gen) 
+    {
+        vao_trans_gen = true;
+        vbo_trans_gen = true;
+        ibo_trans_gen = true;
+        GLCall(glGenVertexArrays(1, &vao_trans)); // Vertex  Array  Object
+        GLCall(glGenBuffers(1, &vbo_trans)); // Vertex  Buffer Object (temp)
+        GLCall(glBindVertexArray(vao_trans));
+        GLCall(glGenBuffers(1, &ibo_trans)); // Vertex  Buffer Object (temp)
     }
 
+    Bind(vao_trans, vbo_trans, ibo_trans, &size_trans, transmesh);
+}
+
+void ChunkRenderer::Bind(GLuint vao, GLuint vbo, GLuint ibo, int* ibo_size, Mesh* mesh)
+{
     GLCall(glBindVertexArray(vao));
     GLCall(glBindBuffer(GL_ARRAY_BUFFER, vbo));
 
-    SetVertices(mesh);
-
-    if(!ibo_gen)
-    {
-        ibo_gen = true;
-        GLCall(glGenBuffers(1, &ibo)); // Element Buffer Object (temp)
-    }
-
-    SetIndices(mesh);
+    SetVertices(mesh, vao, vbo);
+    SetIndices(mesh, vao, ibo, ibo_size);
 
     glBindVertexArray(0);
-
-#pragma endregion
-
-#pragma region TEXTURES
-
-    auto [textureID, img] = TextureManager::LoadTextureGPU("resources/textures/grass_top.png");
-    texture = textureID;
-
-    // bind the texture
-    glBindTexture(GL_TEXTURE_2D, textureID);
-    // set texture parameters
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-
-    // Set the filter to nearest
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
-    int width = img->width;
-    int height = img->height;
-
-    // set texture content
-    // TODO Try without the following
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, img->c_data);
-    glGenerateMipmap(GL_TEXTURE_2D);
-#pragma endregion
 }
-
 
 
 void ChunkRenderer::SetVerticesUV(Mesh* mesh, RectUV uv)
 {
-    GLCall(glBindVertexArray(vao));
-    GLCall(glBindBuffer(GL_ARRAY_BUFFER, vbo));
+    GLCall(glBindVertexArray(m_vao));
+    GLCall(glBindBuffer(GL_ARRAY_BUFFER, m_vbo));
     
     // Contains UV's
     if(mesh->uvs.size() >= 1 && mesh->uvs.size() == mesh->vertices.size())
@@ -279,6 +282,8 @@ void ChunkRenderer::Render()
     auto program = mat->programID;
 
     GLCall(glUseProgram(program));
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); 
+    glEnable( GL_BLEND );
 
     GLCall(GLuint uniTexture = glGetUniformLocation(program, "tex"));
     GLCall(GLuint uniTransform = glGetUniformLocation(program, "MVP"));
@@ -299,8 +304,13 @@ void ChunkRenderer::Render()
     glm::mat4 mvp = Renderer::camera->projection * Renderer::camera->view * world->transform;
     GLCall(glUniformMatrix4fv(uniTransform, 1, GL_FALSE,  glm::value_ptr(mvp)));
 
-    GLCall(glBindVertexArray(vao));
-    GLCall(glDrawElements(GL_TRIANGLES, size, GL_UNSIGNED_INT, nullptr));
+    // Render opaque geometry
+    GLCall(glBindVertexArray(m_vao));
+    GLCall(glDrawElements(GL_TRIANGLES, m_size, GL_UNSIGNED_INT, nullptr));
+
+    // Render transparent geometry
+    GLCall(glBindVertexArray(vao_trans));
+    GLCall(glDrawElements(GL_TRIANGLES, size_trans, GL_UNSIGNED_INT, nullptr));
 
     glBindVertexArray(0);
 }

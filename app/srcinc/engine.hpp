@@ -14,6 +14,7 @@ class Engine {
     double timeLastFrame;
     double deltaTime;
     double targetFPS = 60.0;
+    bool limitFPS = true;
     bool quit = false;
     
 

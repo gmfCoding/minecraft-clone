@@ -30,7 +30,7 @@ void PlayerController::Control(PlayerMove move)
 void PlayerController::OnMouseInput(void* _input)
 {
     Input* input = reinterpret_cast<Input*> (_input);
-    float sensitivity = 30.0f * currentEngine->deltaTime;
+    float sensitivity = 0.3f;
 
 
     camera->yaw   += input->mouseXDelta * sensitivity;

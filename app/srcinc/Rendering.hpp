@@ -11,23 +11,23 @@ class Object;
 
 struct MeshRenderer
 {
-    GLuint vao, vbo, ibo;
+    GLuint m_vao, m_vbo, m_ibo;
     bool vao_gen, vbo_gen, ibo_gen;
 
-    GLsizei size;
     GLuint texture;
-    Mesh* mesh;
+    Mesh* m_mesh;
+    GLsizei m_size;
     const std::string& materialName;
     Shader* shader;
 
-    MeshRenderer(const std::string& material) : materialName(material), vao_gen(false), vbo_gen(false), ibo_gen(false)
+    MeshRenderer(const std::string& material) : materialName(material), m_size(0), texture(0), vao_gen(false), vbo_gen(false), ibo_gen(false)
     {
 
     }
 
     void Render();
-    void SetVertices(Mesh* mesh);
-    void SetIndices(Mesh* mesh);
+    void SetVertices(Mesh* mesh, int vao, int vbo);
+    void SetIndices(Mesh* mesh, int vao, int ibo, int* size);
 
     
     void Bind(Mesh* mesh);

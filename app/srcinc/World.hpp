@@ -19,20 +19,31 @@ struct Block
 
 class ChunkRenderer : public MeshRenderer {
     World* world;
+
+
+
     public:
-    Mesh* mesh;
     int chunkX, chunkY, chunkZ;
     RectUV rectuv;
+    Mesh* transmesh;
 
-    ChunkRenderer(World* _world) : MeshRenderer::MeshRenderer("world")
+    GLuint vao_trans, vbo_trans, ibo_trans;
+    bool vao_trans_gen, vbo_trans_gen, ibo_trans_gen;
+    int size_trans;
+
+    ChunkRenderer(World* _world) : MeshRenderer::MeshRenderer("world"), size_trans(0), vao_trans(0), vbo_trans(0), ibo_trans(0), vao_trans_gen(false), vbo_trans_gen(false), ibo_trans_gen(false)
     {
         world = _world;
     }
 
     void Regenerate();
 
-
     void Bind(Mesh* mesh);
+
+    void BindOpaque();
+    void BindTransparent();
+
+    void Bind(GLuint vao, GLuint vbo, GLuint ibo, int* ibo_size, Mesh* mesh);
 
     void SetVerticesUV(Mesh* mesh, RectUV uv);
     
@@ -51,7 +62,7 @@ class World
     Block* map;
 
     glm::mat4 transform = glm::mat4(1.0);
-    Mesh* mesh;
+
     ChunkRenderer* renderer;
 
     World(int _sizeX, int _sizeY, int _sizeZ);

@@ -47,8 +47,6 @@ const PixelData* Image::GetPixelAt(int x, int y)
 
 Image::~Image()
 {
-    std::cout << "Deleteing Image: " << mPath;
-    std::cout << "At: " << this << std::endl;
     stbi_image_free(data);
 }
 

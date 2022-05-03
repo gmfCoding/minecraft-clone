@@ -12,16 +12,34 @@ class Blocks
 {    
 public:
     class BlockConfig {
+
         public:
+        enum BlockFlags
+        {
+            None,
+            Transparent = 1,
+            TransparentVol = 2,
+            Other3   = 4,
+            Other4 = 8
+        };
+
         const std::string name;
         const int col_id;
-        //const FACE textures = FACE::NONE;
+
+        BlockFlags flags;
+
         std::map<FACE, std::string>* faceFiles;
         const std::map<FACE, int> animated;
         std::vector<std::string> textureFiles;
         int textures;
 
-        BlockConfig(const std::string& p_name, int p_col_id, int p_textures, std::vector<std::string> p_textureFiles);
+        RectUV GetUVForFace(FACE face)
+        {
+            std::string texture = (*faceFiles)[face];
+            return (*worldTextureUVMap)[texture];
+        }
+
+        BlockConfig(const std::string& p_name, int p_col_id, BlockFlags p_flags, int p_textures, std::vector<std::string> p_textureFiles);
     };
     
     static std::map<int, std::string> blockIDToName;
@@ -34,6 +52,7 @@ public:
 
     static std::set<std::string> GetTextureNames();
 
+    static BlockConfig* GetConfig(int blockID);
     static RectUV GetUVForFace(FACE face, int blockID);
 };
 

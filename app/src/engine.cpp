@@ -105,9 +105,10 @@ int Engine::Intialise()
         timeLastFrame = glfwGetTime();
         this->Update();
 
-        while (glfwGetTime() < lasttime + 1.0/targetFPS) {
+        while (limitFPS && glfwGetTime() < lasttime + 1.0/targetFPS) {
             // TODO: Put the thread to sleep, yield, or simply do nothing
         }
+        
         lasttime += 1.0/targetFPS;
 
         glfwPollEvents();  

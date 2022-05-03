@@ -50,4 +50,10 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
 )
 
 message(STATUS "COPY ${PROJECT_SOURCE_DIR}/app/resources DESTINATION ${CMAKE_CURRENT_BINARY_DIR}")
-file(COPY ${PROJECT_SOURCE_DIR}/app/resources DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+# file(COPY ${PROJECT_SOURCE_DIR}/app/resources DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+
+# add_custom_command(TARGET app PRE_BUILD COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/app/resources/ $<TARGET_FILE_DIR:app>)
+
+add_custom_target(copy-runtime-files ALL
+    COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/app/resources ${CMAKE_BINARY_DIR}/resources
+    DEPENDS ${MY_TARGET})

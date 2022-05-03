@@ -12,9 +12,9 @@ class Mesh {
 class Object;
 struct MeshRenderer
 {
-    GLuint vao;
-    GLsizei size;
-    Mesh* mesh;
+    GLuint m_vao;
+    GLsizei m_size;
+    Mesh* m_mesh;
     const std::string& materialName;
     MeshRenderer(const std::string& material) : materialName(material)
     {

@@ -9,7 +9,7 @@ std::map<int, std::string> Blocks::blockIDToName = std::map<int, std::string> ()
 std::map<std::string, int> Blocks::blockNameToID = std::map<std::string, int> ();
 std::map<int, Blocks::BlockConfig *> Blocks::blockIDToConfig = std::map<int, Blocks::BlockConfig *> ();
 
-Blocks::BlockConfig::BlockConfig(const std::string& p_name, int p_col_id, int p_textures, std::vector<std::string> p_textureFiles)  : name(p_name), col_id(p_col_id), textures(p_textures), textureFiles(p_textureFiles)
+Blocks::BlockConfig::BlockConfig(const std::string& p_name, int p_col_id, BlockConfig::BlockFlags p_flags, int p_textures, std::vector<std::string> p_textureFiles)  : name(p_name), col_id(p_col_id), flags(p_flags), textures(p_textures), textureFiles(p_textureFiles)
 {   
     int top = p_textures >> (4*5) & 0xF;
     int bottom = p_textures >> (4*4)   & 0xF;
@@ -31,13 +31,20 @@ void Blocks::InitialiseBlocks()
     if (blocksInitialised == false)
     {
         blocksInitialised = true;
+        auto None = BlockConfig::BlockFlags::None;
+        auto Transparent = BlockConfig::BlockFlags::Transparent;
+        auto TransparentVol = BlockConfig::BlockFlags::TransparentVol;
 
         std::vector<BlockConfig>* blocks = new std::vector<BlockConfig>();
-        blocks->push_back(BlockConfig("grass", 0x169E26, 0x120000, {"grass_side","grass_top","dirt"}));
-        blocks->push_back(BlockConfig("sand", 0xF7F3CE, 0x000000, {"sand"}));
-        blocks->push_back(BlockConfig("water", 0x193A91, 0x100000, {"water", "water"}));
-        blocks->push_back(BlockConfig("log", 0x73322E, 0x110000, {"log", "log_top"}));
-        
+
+        blocks->push_back(BlockConfig("grass", 0x649600,None, 0x120000,   {"grass_side","grass_top","dirt"}));
+        blocks->push_back(BlockConfig("sand", 0xF7F3CE,None, 0x000000,   {"sand"}));
+        blocks->push_back(BlockConfig("log", 0x7F432F,None, 0x110000,  {"log", "log_top"}));
+        blocks->push_back(BlockConfig("cobblestone", 0x586162,None, 0x000000,  {"cobblestone"}));
+
+        blocks->push_back(BlockConfig("water", 0x0000FF,TransparentVol, 0x100000,  {"water", "water"}));
+        blocks->push_back(BlockConfig("leaves", 0x00B300,Transparent, 0x000000,  {"leaves"}));
+
         for (auto &i : *blocks)
         {
             blockIDToName[i.col_id] = i.name;
@@ -68,4 +75,23 @@ std::set<std::string> Blocks::GetTextureNames()
     }
 
     return filesPaths;
+}
+
+
+Blocks::BlockConfig* Blocks::GetConfig(int blockID)
+{   
+    auto it = blockIDToConfig.find(blockID);
+    if(it != blockIDToConfig.end())
+        return blockIDToConfig[blockID];
+    return nullptr;
+}
+
+inline Blocks::BlockConfig::BlockFlags operator|(Blocks::BlockConfig::BlockFlags a, Blocks::BlockConfig::BlockFlags b)
+{
+    return static_cast<Blocks::BlockConfig::BlockFlags>(static_cast<int>(a) | static_cast<int>(b));
+}
+
+inline Blocks::BlockConfig::BlockFlags operator&(Blocks::BlockConfig::BlockFlags a, Blocks::BlockConfig::BlockFlags b)
+{
+    return static_cast<Blocks::BlockConfig::BlockFlags>(static_cast<int>(a) & static_cast<int>(b));
 }

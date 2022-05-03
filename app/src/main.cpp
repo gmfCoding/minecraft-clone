@@ -60,6 +60,9 @@ class Mineclone : public Engine {
         Engine::Start();
         targetFPS = 144.0;
 
+        limitFPS = true;
+        glfwSwapInterval(0);
+
         LoadMaterials();
 
         camera = new Camera(70.0f, 4.0f / 3.0f, 0.1f, 100.0f);
@@ -81,7 +84,6 @@ class Mineclone : public Engine {
 
         Blocks::InitialiseBlocks();
         auto textures = Blocks::GetTextureNames();
-        //
         // fstfImages.insert({TEXTUREPATH("red"), TEXTUREPATH("green"), TEXTUREPATH("blue"),  TEXTUREPATH("pink")});
 
         int pixelsX = 0;
@@ -96,10 +98,9 @@ class Mineclone : public Engine {
         GLuint textureID = TextureManager::UploadNamedTexture(image, "worldatlas");
         ie.Init(textureID);
 
-
         input.onMouseChangedArr.push_back([this](void* _input){ playerController->OnMouseInput(_input);});
 
-        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL); 
+        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED); 
 
         #define TEXTUREPATH(i) getAssetPathMany({"textures",i})
 
@@ -125,7 +126,7 @@ class Mineclone : public Engine {
         new VertexFragmentCombinationMaterial("basic",          getAssetPathMany({"shaders", "basic_vertex.shader"}),   getAssetPathMany({"shaders", "basic_fragment.shader"}));
         new VertexFragmentCombinationMaterial("alt_textured",   getAssetPathMany({"shaders", "alt_tex_vertex.shader"}), getAssetPathMany({"shaders", "alt_tex_fragment.shader"}));
         auto alttexdebug = new VertexFragmentCombinationMaterial("alt_textured_debug",   getAssetPathMany({"shaders", "alt_tex_vertex_debug.shader"}), getAssetPathMany({"shaders", "alt_tex_fragment_debug.shader"}));
-        alttexdebug->defaults.properties["dsp"] = true;
+        alttexdebug->defaults.properties["dsp"] = false;
         new VertexFragmentCombinationMaterial("default",        getAssetPathMany({"shaders", "vertex.shader"}),         getAssetPathMany({"shaders", "fragment.shader"}));
     }
 
@@ -155,8 +156,6 @@ class Mineclone : public Engine {
         
         //ie.Update();
         
-        
-        
         world->renderer->Render();
 
 
@@ -174,7 +173,7 @@ class Mineclone : public Engine {
     }
 
     bool show_demo_window = false;
-    bool show_another_window = false;
+    bool show_atlas_tex = false;
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
     RectUV genRect = RectUV(glm::vec2(0.0, 0.0), glm::vec2(0.0, 1.0), glm::vec2(1.0, 1.0), glm::vec2(1.0, 0.0), 1.0);
     void ImGUIExample()
@@ -188,15 +187,11 @@ class Mineclone : public Engine {
             static float f = 0.0f;
             static int counter = 0;
 
-            ImGui::Begin("Information");                          // Create a window called "Hello, world!" and append into it.
+            
+            ImGui::Begin("Information");
 
-            // ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
-            // ImGui::Checkbox("Demo Window", &show_demo_window);      // Edit bools storing our window open/close state
-            // ImGui::Checkbox("Another Window", &show_another_window);
-
-            // ImGui::SliderFloat("float", &f, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
-            // ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
-
+            if (ImGui::Button("View Atlas"))
+                show_atlas_tex = true;
             
             Material* mat = MaterialSystem::materialMap["alt_textured_debug"];
             bool &dsp = mat->defaults.GetValueRef<bool>("dsp");
@@ -210,30 +205,27 @@ class Mineclone : public Engine {
             {
                 world->renderer->rectuv = genRect;
                 world->renderer->Regenerate();
-                world->renderer->Bind(world->mesh);  
+                world->renderer->Bind(world->renderer->m_mesh);
             }
-    
-            // if (ImGui::Button("Button"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
-            //     counter++;
-            // ImGui::SameLine();
-            // ImGui::Text("counter = %d", counter);
 
             ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
             ImGui::End();
         }
 
         // 3. Show another simple window.
-        if (show_another_window)
+        if (show_atlas_tex)
         {
-            ImGui::Begin("Another Window", &show_another_window);   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
-            ImGui::Text("Hello from another window!");
+            ImGui::Begin("World atlas texture", &show_atlas_tex);
+            GLuint atlastex_id = TextureManager::GetNamedTexture("worldatlas");
+            ImGui::Image((void*)(intptr_t)atlastex_id, ImVec2(48*4, 48*4));
+
             if (ImGui::Button("Close Me"))
-                show_another_window = false;
+                show_atlas_tex = false;
             ImGui::End();
         }
     }
 
-    bool hideMouse = false;
+    bool hideMouse = true;
     void Input()
     {
         if(onKeyUpdate)
