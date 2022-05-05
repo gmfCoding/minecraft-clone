@@ -6,8 +6,10 @@
             "type": "shell",
             "command": "cmake",
             "args": [
-                "-B build",
-                "-G \"MinGW Makefiles\""
+                {
+                    "value": "-B build -G \"MinGW Makefiles\"",
+                    "quoting": "escape"
+                }
             ],
             "problemMatcher": []
         },
@@ -16,9 +18,10 @@
             "type": "shell",
             "command": "cmake",
             "args": [
-                "-B build",
-                "-G \"MinGW Makefiles\"",
-                "-DCMAKE_BUILD_TYPE=Debug"
+                {
+                    "value": "-B build -G \"MinGW Makefiles\" -DCMAKE_BUILD_TYPE=Debug",
+                    "quoting": "escape"
+                }
             ],
             "problemMatcher": []
         },
@@ -31,7 +34,7 @@
         {
             "label": "Run Project",
             "type": "process",
-            "command": "${workspaceFolder}/build/app.exe",
+            "command": "${workspaceFolder}/build/openmc.exe",
             "problemMatcher": []
         },
         {
@@ -43,7 +46,11 @@
                 "Build Cmake",
                 "Run Project"
             ],
-            "problemMatcher": []
+            "problemMatcher": [],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
         }
     ]
 }

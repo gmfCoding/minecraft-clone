@@ -1,1 +1,4 @@
+message(STATUS "Executing Cmake")
+
 set (CMAKE_GENERATOR "MinGW Makefiles" CACHE INTERNAL "" FORCE)
+set (CMAKE_BUILD_TYPE "Debug" CACHE INTERNAL "" FORCE)

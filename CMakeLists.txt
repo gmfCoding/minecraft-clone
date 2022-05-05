@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.12)
-project(app)
+project(openmc VERSION 0.1.0)
 set(SOURCES "")
 set(IMGUISRC "")
 
@@ -28,12 +28,12 @@ target_include_directories(${CMAKE_PROJECT_NAME}
         ${PROJECT_SOURCE_DIR}/app/srcinc
     PUBLIC
         ${PROJECT_SOURCE_DIR}/app/vendor/
-	${PROJECT_SOURCE_DIR}/app/vendor/glm
-	${PROJECT_SOURCE_DIR}/app/vendor/other
-	${PROJECT_SOURCE_DIR}/app/vendor/nlohmann
+	    ${PROJECT_SOURCE_DIR}/app/vendor/glm
+	    ${PROJECT_SOURCE_DIR}/app/vendor/other
+	    ${PROJECT_SOURCE_DIR}/app/vendor/nlohmann
         ${PROJECT_SOURCE_DIR}/app/vendor/imgui
         ${PROJECT_SOURCE_DIR}/app/vendor/imgui/backends
-	${PROJECT_SOURCE_DIR}/app/vendor/glad/include/glad
+	    ${PROJECT_SOURCE_DIR}/app/vendor/glad/include/glad
         ${GLFW_HEADERS}
 )
 
@@ -50,10 +50,6 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
 )
 
 message(STATUS "COPY ${PROJECT_SOURCE_DIR}/app/resources DESTINATION ${CMAKE_CURRENT_BINARY_DIR}")
-# file(COPY ${PROJECT_SOURCE_DIR}/app/resources DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-
-# add_custom_command(TARGET app PRE_BUILD COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/app/resources/ $<TARGET_FILE_DIR:app>)
-
 add_custom_target(copy-runtime-files ALL
     COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/app/resources ${CMAKE_BINARY_DIR}/resources
     DEPENDS ${MY_TARGET})
