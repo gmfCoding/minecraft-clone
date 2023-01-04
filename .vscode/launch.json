@@ -23,7 +23,7 @@
                 }
             ],
             "windows": {
-                "program": "${workspaceRoot}\\build\\app.exe",
+                "program": "${workspaceRoot}\\build\\openmc.exe",
                 "miDebuggerPath": "C:\\msys64\\mingw64\\bin\\gdb.exe",
             },
             "preLaunchTask": "Build Cmake"
@@ -45,7 +45,7 @@
             "windows": {
                 "program": "C:\\Program Files\\RenderDoc\\qrenderdoc.exe",
                 "args": [
-                    "${workspaceRoot}\\build\\app.exe"
+                    "${workspaceRoot}\\build\\openmc.exe"
                 ]
             }
         },

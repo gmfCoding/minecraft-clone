@@ -52,7 +52,7 @@ void MeshRenderer::Bind(Mesh* mesh)    {
     GLCall(glBindBuffer(GL_ARRAY_BUFFER, m_vbo));
 
     SetVertices(mesh, m_vao, m_vbo);
-    SetIndices(mesh, m_vao, m_ibo, &m_size);
+    SetIndices(mesh, m_vao, m_ibo, &m_size, false);
 
 
     GLCall(glBindVertexArray(0));
@@ -94,7 +94,7 @@ void MeshRenderer::SetVertices(Mesh* mesh, int vao = -1, int vbo = -1)
 }
 
 
-void MeshRenderer::SetIndices(Mesh* mesh, int vao = -1, int ibo = -1, int* size = nullptr)
+void MeshRenderer::SetIndices(Mesh* mesh, int vao = -1, int ibo = -1, int* size = nullptr, bool dynamic = false)
 {
     if(vao == -1)
         vao = this->m_vao;
@@ -117,7 +117,7 @@ void MeshRenderer::SetIndices(Mesh* mesh, int vao = -1, int ibo = -1, int* size 
     // NOTE: Do we need a currently bound vao to buffer/bind the ibo?
     // Fill the currently bound GL_ELEMENT_ARRAY_BUFFER buffer (ibo) with the data in indices
     GLCall(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo));
-    GLCall(glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(Index), indices.data(), GL_STATIC_DRAW));
+    GLCall(glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(Index), indices.data(), dynamic ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW));
 }
 
 void MeshRenderer::Render()

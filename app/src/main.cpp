@@ -24,7 +24,7 @@
 #include "MaterialSystem.hpp"
 #include "Material.hpp"
 #include "Blocks.hpp"
-#include "AtulPwd.hpp"
+#include "fileio.hpp"
 #include "gmfc_image.hpp"
 #include "TextureManager.hpp"
 #include "ImageExample.hpp"
@@ -106,9 +106,9 @@ class Mineclone : public Engine {
 
 
         //world = World::LoadWorld("world-imports/single.json");
-        world = World::LoadWorld("world-imports/grasswater.json");
+        //world = World::LoadWorld("world-imports/grasswater.json");
         
-        //world = World::LoadWorld("world-imports/desolateisland.json");
+        world = World::LoadWorld("world-imports/desolateisland.json");
         world->transform = glm::translate(glm::vec3(1,0,1));
         glm::mat4 mat4id = glm::mat4(1.0);
     }

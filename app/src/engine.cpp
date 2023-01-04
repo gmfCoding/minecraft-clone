@@ -46,9 +46,6 @@ void Engine::Start() {
     currentEngine = this;
 }
 
-void Engine::Update() {
-    
-}
 
 int Engine::Intialise()
 {

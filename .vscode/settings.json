@@ -75,6 +75,18 @@
         "*.json": "jsonc",
         "*.rh": "cpp",
         "set": "cpp",
-        "any": "cpp"
+        "any": "cpp",
+        "*.tcc": "cpp",
+        "codecvt": "cpp",
+        "cwctype": "cpp",
+        "deque": "cpp",
+        "memory_resource": "cpp",
+        "random": "cpp",
+        "string_view": "cpp",
+        "numbers": "cpp",
+        "cinttypes": "cpp",
+        "mutex": "cpp",
+        "stop_token": "cpp",
+        "thread": "cpp"
     }
 }

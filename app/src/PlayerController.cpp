@@ -13,7 +13,7 @@ void PlayerController::Control(PlayerMove move)
     float moveSpeed = 6.6f * currentEngine->deltaTime;
     glm::vec3* pos = camera->PtrPosition();
 
-    glm::vec3 cameraLeft = glm::cross(glm::vec3(0,1,0), camera->direction);
+    glm::vec3 cameraLeft = glm::normalize(glm::cross(glm::vec3(0,1,0), camera->direction));
     glm::vec3 cameraUp =  -glm::normalize(glm::cross(camera->direction, -cameraLeft));
 
     if(move.Left) {

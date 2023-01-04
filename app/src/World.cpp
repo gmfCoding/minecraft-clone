@@ -16,8 +16,8 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/io.hpp>
 
-//#include "gldebug.hpp"
-#define GLCall(a) a
+#include "gldebug.hpp"
+//#define GLCall(a) a
 
 
 inline int fastrand(int *sc_seed)
@@ -239,7 +239,7 @@ void ChunkRenderer::Bind(GLuint vao, GLuint vbo, GLuint ibo, int* ibo_size, Mesh
     GLCall(glBindBuffer(GL_ARRAY_BUFFER, vbo));
 
     SetVertices(mesh, vao, vbo);
-    SetIndices(mesh, vao, ibo, ibo_size);
+    SetIndices(mesh, vao, ibo, ibo_size, true);
 
     glBindVertexArray(0);
 }
@@ -304,13 +304,38 @@ void ChunkRenderer::Render()
     glm::mat4 mvp = Renderer::camera->projection * Renderer::camera->view * world->transform;
     GLCall(glUniformMatrix4fv(uniTransform, 1, GL_FALSE,  glm::value_ptr(mvp)));
 
+
+    // GLCall(glDepthMask(GL_FALSE));
+    // GLCall(glEnable(GL_BLEND));
+    
+    // GLCall(glBlendFunci(0, GL_ONE, GL_ONE));
+    // GLCall(glBlendFunci(1, GL_ZERO, GL_ONE_MINUS_SRC_ALPHA));
+
     // Render opaque geometry
     GLCall(glBindVertexArray(m_vao));
     GLCall(glDrawElements(GL_TRIANGLES, m_size, GL_UNSIGNED_INT, nullptr));
+    // GLboolean mode;
 
+    // glGetBooleanv(GL_CULL_FACE, &mode);
+
+    //glDisable(GL_CULL_FACE);
     // Render transparent geometry
-    GLCall(glBindVertexArray(vao_trans));
-    GLCall(glDrawElements(GL_TRIANGLES, size_trans, GL_UNSIGNED_INT, nullptr));
+    GLCall(glBindVertexArray(vao_trans)); 
+    glBindBuffer(GL_ARRAY_BUFFER, vbo_trans);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo_trans);
 
+    // Sort the triangles in transmesh
+    transmesh->CameraSort(Renderer::camera->GetPosition());
+
+    // Upload the sort triangle indices to the GPU
+    glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, sizeof(unsigned short) * transmesh->indices.size(), transmesh->indices.data());
+    GLCall(glDrawElements(GL_TRIANGLES, size_trans, GL_UNSIGNED_SHORT, nullptr));
+
+    // if(mode)
+    //     glEnable(GL_CULL_FACE);
+
+    // Unbind the VAO, VBO, and IBO
     glBindVertexArray(0);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }

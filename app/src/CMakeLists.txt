@@ -6,6 +6,7 @@ Camera.cpp
 engine.cpp
 Input.cpp
 main.cpp
+Mesh.cpp
 Material.cpp
 MaterialSystem.cpp
 Object.cpp

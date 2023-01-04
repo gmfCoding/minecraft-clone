@@ -27,7 +27,7 @@ struct MeshRenderer
 
     void Render();
     void SetVertices(Mesh* mesh, int vao, int vbo);
-    void SetIndices(Mesh* mesh, int vao, int ibo, int* size);
+    void SetIndices(Mesh* mesh, int vao, int ibo, int* size, bool dynamic);
 
     
     void Bind(Mesh* mesh);
