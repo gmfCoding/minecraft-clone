@@ -32,7 +32,7 @@ std::string getAssetPath(const std::string& relative)
     return AtulPWD::mergePaths(AtulPWD::mergePaths(AtulPWD::getExecutableDir(), "resources"), relative);
 }
 
-std::string getAssetPathMany(std::initializer_list<std::string> paths)
+std::string getAssetPath(std::initializer_list<std::string> paths)
 {
     std::string current;
     for (auto &&i : paths)

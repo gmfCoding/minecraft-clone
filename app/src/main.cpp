@@ -29,6 +29,9 @@
 #include "TextureManager.hpp"
 #include "ImageExample.hpp"
 
+
+#include "Postprocess.hpp"
+
 #include "GizmoLine.hpp"
 
 #include "imgui.h"
@@ -56,8 +59,15 @@ class Mineclone : public Engine {
 
     std::map<std::string, RectUV> uvMap;
 
+
+    PostProcessing* postprocess;
+    PostprocessEffect* underwater_effect;
+
     void Start() override {
         Engine::Start();
+
+        this->clear_color = new glm::vec4(0.45f, 0.55f, 0.60f, 1.00f);
+
         targetFPS = 144.0;
 
         limitFPS = true;
@@ -111,6 +121,17 @@ class Mineclone : public Engine {
         world = World::LoadWorld("world-imports/desolateisland.json");
         world->transform = glm::translate(glm::vec3(1,0,1));
         glm::mat4 mat4id = glm::mat4(1.0);
+
+
+        postprocess = new PostProcessing();
+        postprocess->Init();
+        postprocess->enable = true;
+
+        underwater_effect = new PostprocessEffect("underwater", new VertexFragmentCombinationMaterial("basic", getAssetPath({"shaders", "vertex_uv.shader"}),   getAssetPath({"shaders", "postfx", "underwater.shader"})));
+        underwater_effect->Setup();
+        underwater_effect->enabled = true;
+
+        postprocess->Add(underwater_effect, 0);
     }
 
 
@@ -123,16 +144,24 @@ class Mineclone : public Engine {
 
     void LoadMaterials()
     {
-        new VertexFragmentCombinationMaterial("basic",          getAssetPathMany({"shaders", "basic_vertex.shader"}),   getAssetPathMany({"shaders", "basic_fragment.shader"}));
-        new VertexFragmentCombinationMaterial("alt_textured",   getAssetPathMany({"shaders", "alt_tex_vertex.shader"}), getAssetPathMany({"shaders", "alt_tex_fragment.shader"}));
-        auto alttexdebug = new VertexFragmentCombinationMaterial("alt_textured_debug",   getAssetPathMany({"shaders", "alt_tex_vertex_debug.shader"}), getAssetPathMany({"shaders", "alt_tex_fragment_debug.shader"}));
+        new VertexFragmentCombinationMaterial("basic",          getAssetPath({"shaders", "basic_vertex.shader"}),   getAssetPath({"shaders", "basic_fragment.shader"}));
+        new VertexFragmentCombinationMaterial("alt_textured",   getAssetPath({"shaders", "alt_tex_vertex.shader"}), getAssetPath({"shaders", "alt_tex_fragment.shader"}));
+        auto alttexdebug = new VertexFragmentCombinationMaterial("alt_textured_debug",   getAssetPath({"shaders", "alt_tex_vertex_debug.shader"}), getAssetPath({"shaders", "alt_tex_fragment_debug.shader"}));
         alttexdebug->defaults.properties["dsp"] = false;
-        new VertexFragmentCombinationMaterial("default",        getAssetPathMany({"shaders", "vertex.shader"}),         getAssetPathMany({"shaders", "fragment.shader"}));
+        new VertexFragmentCombinationMaterial("default",        getAssetPath({"shaders", "vertex.shader"}),         getAssetPath({"shaders", "fragment.shader"}));
+        auto postfx = new VertexFragmentCombinationMaterial("postfx", getAssetPath({"shaders", "vertex_uv.shader"}), getAssetPath({"shaders", "postfx", "hueshift.shader"}));
+        postfx->defaults.properties["hueShift"] = 0.0f;
+
+        auto postfx_fxaa = new VertexFragmentCombinationMaterial("postfx_fxaa", getAssetPath({"shaders", "vertex_uv.shader"}), getAssetPath({"shaders", "postfx", "fxaa.shader"}));
+        postfx_fxaa->defaults.properties["hueShift"] = 0.0f;
     }
 
+    GLuint postfx_vao, postfx_vbo, postfx_ebo;
+
     void Update() override {
-        glClearColor(clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w, clear_color.w);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        postprocess->Begin();
+
         // Start the Dear ImGui frame
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
@@ -158,23 +187,24 @@ class Mineclone : public Engine {
         
         world->renderer->Render();
 
+        postprocess->End();
+        postprocess->ApplyEffects();
 
         ImGUIExample();
-
-
         ImGui::Render();
         int display_w, display_h;
         glfwGetFramebufferSize(window, &display_w, &display_h);
         glViewport(0, 0, display_w, display_h);
-
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
-        glfwSwapBuffers(window);  
+        glfwSwapBuffers(window); 
     }
 
     bool show_demo_window = false;
     bool show_atlas_tex = false;
-    ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+    bool gui_show_postprocessing = false;
+    bool gui_show_information = true;
+
     RectUV genRect = RectUV(glm::vec2(0.0, 0.0), glm::vec2(0.0, 1.0), glm::vec2(1.0, 1.0), glm::vec2(1.0, 0.0), 1.0);
     void ImGUIExample()
     {
@@ -182,14 +212,20 @@ class Mineclone : public Engine {
         if (show_demo_window)
             ImGui::ShowDemoWindow(&show_demo_window);
 
-        // 2. Show a simple window that we create ourselves. We use a Begin/End pair to created a named window.
+        ImGui::Begin("Panels");
+        if(ImGui::Button("Information"))
+            gui_show_information = true;
+        if(ImGui::Button("Post Processing"))
+            gui_show_postprocessing = true;
+        ImGui::End();
+
+
+        if(gui_show_information)
         {
             static float f = 0.0f;
             static int counter = 0;
 
-            
-            ImGui::Begin("Information");
-
+            ImGui::Begin("Information", &gui_show_information);
             if (ImGui::Button("View Atlas"))
                 show_atlas_tex = true;
             
@@ -208,7 +244,20 @@ class Mineclone : public Engine {
                 world->renderer->Bind(world->renderer->m_mesh);
             }
 
+
+
             ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+        }
+
+        ImGui::End();
+
+        if(gui_show_postprocessing)
+        {
+            ImGui::Begin("Post Processing", &gui_show_postprocessing);
+            ImGui::Checkbox("PostProcessing:", &(postprocess->enable));
+            ImGui::Checkbox("Underwater:", &(underwater_effect->enabled));
+            ImGui::Text("Doing Effects:%i", postprocess->effectsEnabled);
+            ImGui::Text("Active Effects:%i", postprocess->ActiveEffectsCount());
             ImGui::End();
         }
 

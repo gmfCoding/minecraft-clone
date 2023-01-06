@@ -84,10 +84,7 @@ int Engine::Intialise()
     // Setup Platform/Renderer backends
     ImGui_ImplOpenGL3_Init("#version 130");
     ImGui_ImplGlfw_InitForOpenGL(window, true);
-
-
-
-    glEnable(GL_DEPTH_TEST);  
+ 
     glEnable(GL_CULL_FACE); 
     glViewport(0, 0, this->width, this->width);
     // During init, enable debug output

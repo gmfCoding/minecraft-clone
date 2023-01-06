@@ -11,23 +11,35 @@ void MaterialSystem::AddMaterial(Material* material)
     materialMap[material->materialName] = material;
 }
 
+static GLuint CreateShader(const std::string& path, GLenum type)
+{
+    GLuint shader = glCreateShader(type);
+    const std::string source = readFile(path);
+    const char *shaderSrc = source.c_str();
+    GLCall(glShaderSource(shader, 1, &shaderSrc, NULL));
+    GLCall(glCompileShader(shader));
+    MaterialSystem::DebugShaderInfo(shader);
+    return shader;
+}
+
+GLuint MaterialSystem::CreateFragProgram(const std::string& fragmentPath)
+{
+    GLuint fragShader = CreateShader(fragmentPath, GL_FRAGMENT_SHADER);
+
+    GLCall(GLuint program = glCreateProgram());
+    GLCall(glAttachShader(program, fragShader));
+    GLCall(glLinkProgram(program));
+    DebugProgramInfo(program);
+
+    GLCall(glDeleteShader(fragShader));
+
+    return program;
+}
+
 GLuint MaterialSystem::CreateVFProgram(const std::string& vertexPath, const std::string& fragmentPath)
 {
-    GLCall(GLuint vertShader = glCreateShader(GL_VERTEX_SHADER));
-    GLCall(GLuint fragShader = glCreateShader(GL_FRAGMENT_SHADER));
-
-    std::string vertShaderStr = readFile(vertexPath);
-    std::string fragShaderStr = readFile(fragmentPath);
-    const char *vertShaderSrc = vertShaderStr.c_str();
-    const char *fragShaderSrc = fragShaderStr.c_str();
-
-    GLCall(glShaderSource(vertShader, 1, &vertShaderSrc, NULL));
-    GLCall(glCompileShader(vertShader));
-    DebugShaderInfo(vertShader);
-
-    GLCall(glShaderSource(fragShader, 1, &fragShaderSrc, NULL));
-    GLCall(glCompileShader(fragShader));
-    DebugShaderInfo(fragShader);
+    GLuint vertShader = CreateShader(vertexPath, GL_VERTEX_SHADER);
+    GLuint fragShader = CreateShader(fragmentPath, GL_FRAGMENT_SHADER);
 
     GLCall(GLuint program = glCreateProgram());
     GLCall(glAttachShader(program, vertShader));
@@ -61,4 +73,5 @@ void MaterialSystem::DebugProgramInfo(GLuint program)
     glGetProgramiv(program, GL_INFO_LOG_LENGTH, &logLength);
     std::vector<char> programError( (logLength > 1) ? logLength : 1 );
     glGetProgramInfoLog(program, logLength, NULL, &programError[0]);
+    std::cout << programError.data();
 }

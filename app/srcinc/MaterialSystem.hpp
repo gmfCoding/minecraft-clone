@@ -13,6 +13,7 @@ class MaterialSystem {
 
     static void AddMaterial(Material* material);
 
+    static GLuint CreateFragProgram(const std::string&  fragmentPath);
     static GLuint CreateVFProgram(const std::string& vertexPath, const std::string&  fragmentPath);
     static void DebugShaderInfo(GLuint shader);
     static void DebugProgramInfo(GLuint program);

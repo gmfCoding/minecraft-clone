@@ -12,6 +12,7 @@ void Material::Bind() {
     glUseProgram(this->programID);
 }
 
+
 Material::Material(const std::string _materialName) : materialName(_materialName)
 {
     MaterialSystem::AddMaterial(this);

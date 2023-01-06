@@ -88,7 +88,7 @@ void TextureManager::CreateAtlasFromFiles(std::set<std::string> files, int &pixe
     for (auto &&i : files)
     {
         Image* image = new Image();
-        image->Load(getAssetPathMany({ "textures", i+".png"}));
+        image->Load(getAssetPath({ "textures", i+".png"}));
         if(!initialised)
         {
             size = image->width;
