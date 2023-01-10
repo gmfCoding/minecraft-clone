@@ -17,7 +17,6 @@
 #include "Camera.hpp"
 #include "Rendering.hpp"
 #include "gldebug.hpp"
-#include "World.hpp"
 #include "engine.hpp"
 #include "PlayerMove.hpp"
 #include "PlayerController.hpp"
@@ -26,29 +25,29 @@
 #include "Blocks.hpp"
 #include "fileio.hpp"
 #include "gmfc_image.hpp"
+
 #include "TextureManager.hpp"
 #include "ImageExample.hpp"
 
 
+#include "Mineclone.hpp"
+#include "World.hpp"
+
 #include "Postprocess.hpp"
 
 #include "GizmoLine.hpp"
+#include "Cube.hpp"
 
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
 
-
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include <stb_image_write.h>
 
-class Mineclone : public Engine {
+class MinecloneApp : public Engine {
 
-    PlayerMove playerMove{};
-    Camera* camera;
-    World* world;
-
-    PlayerController* playerController;
+    Mineclone* mc;
 
     GizmoLine* line1;
     GizmoLine* line2;
@@ -58,14 +57,12 @@ class Mineclone : public Engine {
     ImageExample ie;
 
     std::map<std::string, RectUV> uvMap;
-
-
-    PostProcessing* postprocess;
-    PostprocessEffect* underwater_effect;
-
+    PrimitiveCube* prim_cube;
+    Object worldtesttrans = Object();
     void Start() override {
         Engine::Start();
 
+        
         this->clear_color = new glm::vec4(0.45f, 0.55f, 0.60f, 1.00f);
 
         targetFPS = 144.0;
@@ -74,14 +71,15 @@ class Mineclone : public Engine {
         glfwSwapInterval(0);
 
         LoadMaterials();
+        mc = new Mineclone();
+        mc->Start();
+        mc->width = &currentEngine->width;
+        mc->height = &currentEngine->height;
+        mc->SetupPostProcessing();
 
-        camera = new Camera(70.0f, 4.0f / 3.0f, 0.1f, 100.0f);
-        Renderer::camera = camera;
-        camera->SetPosition(glm::vec3(7.0f,2.0f,7.0f));
-        camera->UpdateView();
-
-        playerController = new PlayerController();
-        playerController->camera = Renderer::camera;
+        Renderer::camera = mc->camera ;
+        mc->camera->SetPosition(glm::vec3(7.0f,2.0f,7.0f));
+        mc->camera->UpdateView();
 
         line1 = new GizmoLine(glm::vec3(0,0,0), glm::vec3(1,0,0));
         line2 = new GizmoLine(glm::vec3(0,0,0), glm::vec3(0,1,0));
@@ -108,30 +106,33 @@ class Mineclone : public Engine {
         GLuint textureID = TextureManager::UploadNamedTexture(image, "worldatlas");
         ie.Init(textureID);
 
-        input.onMouseChangedArr.push_back([this](void* _input){ playerController->OnMouseInput(_input);});
+        input.onMouseChangedArr.push_back([this](void* _input){ mc->playerController->OnMouseInput(_input);});
 
         glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED); 
 
         #define TEXTUREPATH(i) getAssetPathMany({"textures",i})
 
-
         //world = World::LoadWorld("world-imports/single.json");
-        //world = World::LoadWorld("world-imports/grasswater.json");
+        //mc->world = World::LoadWorld("world-imports/grasswater.json");
         
-        world = World::LoadWorld("world-imports/desolateisland.json");
-        world->transform = glm::translate(glm::vec3(1,0,1));
+        mc->world = World::LoadWorld("world-imports/desolateisland.json");
+        mc->world->transform = glm::translate(glm::vec3(1,0,1)) * glm::mat4_cast(glm::angleAxis(glm::radians(45.0f), glm::vec3(0,1,0)));
         glm::mat4 mat4id = glm::mat4(1.0);
 
+        
 
-        postprocess = new PostProcessing();
-        postprocess->Init();
-        postprocess->enable = true;
+        
+        worldtesttrans.SetPosition(glm::vec3(-1,0,0));
+        worldtesttrans.SetScale(glm::vec3(2,2.5,1.5));
+        worldtesttrans.SetRotation(glm::angleAxis(glm::radians(45.0f), glm::vec3(0,1,0)));
 
-        underwater_effect = new PostprocessEffect("underwater", new VertexFragmentCombinationMaterial("basic", getAssetPath({"shaders", "vertex_uv.shader"}),   getAssetPath({"shaders", "postfx", "underwater.shader"})));
-        underwater_effect->Setup();
-        underwater_effect->enabled = true;
+        mc->worldtest = World::LoadWorld("world-imports/single.json");
+        mc->worldtest->transform = worldtesttrans.GetTransform();
 
-        postprocess->Add(underwater_effect, 0);
+
+        mc->postprocess->Add(mc->underwater_effect, 0);
+
+        prim_cube = new PrimitiveCube();
     }
 
 
@@ -156,39 +157,42 @@ class Mineclone : public Engine {
         postfx_fxaa->defaults.properties["hueShift"] = 0.0f;
     }
 
-    GLuint postfx_vao, postfx_vbo, postfx_ebo;
-
     void Update() override {
-
-        postprocess->Begin();
-
         // Start the Dear ImGui frame
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
 
-
         Input();
-        playerController->Control(playerMove);
 
-        float rotation = glfwGetTime();
-        Renderer::camera->UpdateView();
+        glm::mat4 feet = Renderer::camera->projection * Renderer::camera->view * glm::translate(Renderer::camera->GetPosition()) * glm::translate(glm::vec3(0,-1.6,0));//
+        
 
+        mc->RenderingBegin();
 
-        line1->setMVP(Renderer::camera->projection * Renderer::camera->view);
-        line2->setMVP(Renderer::camera->projection * Renderer::camera->view);
-        line3->setMVP(Renderer::camera->projection * Renderer::camera->view);
+        mc->Update();
+
+        // Player Feet
+        line1->setMVP(feet);
+        line2->setMVP(feet);
+        line3->setMVP(feet);
 
         line1->draw(Renderer::camera);
         line2->draw(Renderer::camera);
         line3->draw(Renderer::camera);
-        
-        //ie.Update();
-        
-        world->renderer->Render();
 
-        postprocess->End();
-        postprocess->ApplyEffects();
+        // 0,0,0 Origin
+        feet = Renderer::camera->projection * Renderer::camera->view;
+        line1->setMVP(feet);
+        line2->setMVP(feet);
+        line3->setMVP(feet);
+
+        line1->draw(Renderer::camera);
+        line2->draw(Renderer::camera);
+        line3->draw(Renderer::camera);
+
+        
+        mc->RenderingEnd();
 
         ImGUIExample();
         ImGui::Render();
@@ -217,6 +221,10 @@ class Mineclone : public Engine {
             gui_show_information = true;
         if(ImGui::Button("Post Processing"))
             gui_show_postprocessing = true;
+
+
+        worldtesttrans.ImGui_ObjectTransform();
+        mc->worldtest->transform = worldtesttrans.GetTransform();
         ImGui::End();
 
 
@@ -239,12 +247,10 @@ class Mineclone : public Engine {
 
             if (ImGui::Button("Regenerate Mesh"))
             {
-                world->renderer->rectuv = genRect;
-                world->renderer->Regenerate();
-                world->renderer->Bind(world->renderer->m_mesh);
+                mc->world->renderer->rectuv = genRect;
+                mc->world->renderer->Regenerate();
+                mc->world->renderer->Bind(mc->world->renderer->m_mesh);
             }
-
-
 
             ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
         }
@@ -254,10 +260,10 @@ class Mineclone : public Engine {
         if(gui_show_postprocessing)
         {
             ImGui::Begin("Post Processing", &gui_show_postprocessing);
-            ImGui::Checkbox("PostProcessing:", &(postprocess->enable));
-            ImGui::Checkbox("Underwater:", &(underwater_effect->enabled));
-            ImGui::Text("Doing Effects:%i", postprocess->effectsEnabled);
-            ImGui::Text("Active Effects:%i", postprocess->ActiveEffectsCount());
+            ImGui::Checkbox("PostProcessing:", &(mc->postprocess->enable));
+            ImGui::Checkbox("Underwater:", &(mc->underwater_effect->enabled));
+            ImGui::Text("Doing Effects:%i", mc->postprocess->effectsEnabled);
+            ImGui::Text("Active Effects:%i", mc->postprocess->ActiveEffectsCount());
             ImGui::End();
         }
 
@@ -280,12 +286,12 @@ class Mineclone : public Engine {
         if(onKeyUpdate)
         {
 #define KEYCONTROL(keyId, bvar) if(input.isKeyHeld(KeyCode::KEY_##keyId)) { bvar = true;} else{bvar = false;}
-            KEYCONTROL(A,playerMove.Left)
-            KEYCONTROL(S,playerMove.Backwards)
-            KEYCONTROL(D,playerMove.Right)
-            KEYCONTROL(W,playerMove.Forward)
-            KEYCONTROL(Q,playerMove.Down)
-            KEYCONTROL(E,playerMove.Up)
+            KEYCONTROL(A,mc->playerMove.Left)
+            KEYCONTROL(S,mc->playerMove.Backwards)
+            KEYCONTROL(D,mc->playerMove.Right)
+            KEYCONTROL(W,mc->playerMove.Forward)
+            KEYCONTROL(Q,mc->playerMove.Down)
+            KEYCONTROL(E,mc->playerMove.Up)
 
 
             if(input.isKeyDown(KeyCode::KEY_ESCAPE))
@@ -301,6 +307,6 @@ class Mineclone : public Engine {
 
 
 int main() {
-    Mineclone engine = Mineclone();
+    MinecloneApp engine = MinecloneApp();
     return engine.Intialise();
 }

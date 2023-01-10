@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.12)
 
 set(LSOURCE 
 main.cpp
+Mineclone.cpp
 Camera.cpp
 engine.cpp
 Input.cpp
@@ -15,6 +16,7 @@ Rendering.cpp
 World.cpp
 GizmoLine.cpp
 Blocks.cpp
+BoxMeshGen.cpp
 TextureManager.cpp
 CommonData.cpp
 )

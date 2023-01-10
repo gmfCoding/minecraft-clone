@@ -44,6 +44,14 @@ int World::GetIndex(int x, int y, int z)
     return x * sizeY * sizeZ + y * sizeZ + z;
 }
 
+bool World::inBounds(glm::ivec3 pos)
+{
+    bool x = pos.x >= 0 && pos.x < this->sizeX;
+    bool y = pos.y >= 0 && pos.y < this->sizeY;
+    bool z = pos.z >= 0 && pos.z < this->sizeZ;
+    return x & y & z;
+}
+
 void World::Place(int x, int y, int z, int32_t blockID)
 {
     map[GetIndex(x, y, z)].blockID = blockID;

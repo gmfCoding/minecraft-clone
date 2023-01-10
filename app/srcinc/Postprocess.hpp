@@ -62,10 +62,8 @@ class PostProcessing {
 
     PostProcessing() : effects()
     {
-        noeffect = new PostprocessEffect("no_effect", new VertexFragmentCombinationMaterial("basic", getAssetPath({"shaders", "vertex_uv.shader"}),   getAssetPath({"shaders", "postfx", "noeffect.shader"})));
+        noeffect = new PostprocessEffect("no_effect", new VertexFragmentCombinationMaterial("postfx_noeffect", getAssetPath({"shaders", "vertex_uv.shader"}),   getAssetPath({"shaders", "postfx", "noeffect.shader"})));
     }
-
-
 
     public:
     void Init()

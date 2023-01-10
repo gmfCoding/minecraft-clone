@@ -50,6 +50,7 @@ public:
 
     void UpdateTransform() const;
 
+    void ImGui_ObjectTransform();
 
     Object();
     mutable glm::mat4 transform;

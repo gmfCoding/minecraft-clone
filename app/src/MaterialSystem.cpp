@@ -1,13 +1,20 @@
 #include "LoadGlad.h"
 #include <map>
+#include <vector>
+
 #include "MaterialSystem.hpp"
 #include "fileio.hpp"
 #include "gldebug.hpp"
-#include <vector>
+
 
 std::map<std::string, Material*> MaterialSystem::materialMap = std::map<std::string, Material*>();
 void MaterialSystem::AddMaterial(Material* material)
 {
+    
+    if(materialMap.count(material->materialName) > 1)
+        std::cout << "Warning: MaterialShader redefinition: " << material->materialName << std::endl;
+    else
+        std::cout << "MaterialShader definition: " << material->materialName << std::endl;
     materialMap[material->materialName] = material;
 }
 

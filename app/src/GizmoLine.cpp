@@ -49,7 +49,7 @@ int GizmoLine::draw(Camera* camera) {
     glm::mat4 mvp = camera->projection * camera->view;
 
     GLuint uniTransform = glGetUniformLocation(shaderProgram, "MVP");
-    glUniformMatrix4fv(uniTransform, 1, GL_FALSE,  glm::value_ptr(mvp));
+    glUniformMatrix4fv(uniTransform, 1, GL_FALSE,  glm::value_ptr(this->transform));
 
     glUniform3fv(glGetUniformLocation(shaderProgram, "color"), 1, &lineColor[0]);
 

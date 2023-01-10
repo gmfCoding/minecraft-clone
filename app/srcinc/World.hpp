@@ -20,8 +20,6 @@ struct Block
 class ChunkRenderer : public MeshRenderer {
     World* world;
 
-
-
     public:
     int chunkX, chunkY, chunkZ;
     RectUV rectuv;
@@ -74,5 +72,7 @@ class World
     static World* LoadWorld(const char* path);
 
     void GenerateFace(glm::ivec3 dir, bool cond, glm::ivec3 offset, int32_t blockID);
+
+    bool inBounds(glm::ivec3 position);
 };
 
