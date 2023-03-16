@@ -20,6 +20,7 @@ BoxMeshGen.cpp
 TextureManager.cpp
 CommonData.cpp
 transform.cpp
+rendering/line_renderer.cpp
 physics/staticbody.cpp
 physics/collision_system.cpp
 physics/physdata.cpp

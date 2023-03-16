@@ -4,7 +4,7 @@
 
 namespace AABBWireframe
 {
-    std::vector<glm::vec3> CreateWriteframe(AABB* box)
+    std::vector<glm::vec3> CreateWireframe(AABB* box)
     {
         glm::vec3 pos = box->center();
         glm::vec3 min = box->min;

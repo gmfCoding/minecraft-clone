@@ -309,7 +309,9 @@ void ChunkRenderer::Render()
     glUniform1i(uniTexture, 0);
 
 
-    glm::mat4 mvp = Renderer::camera->projection * Renderer::camera->view * world->transform;
+    glm::mat4 mvp = Renderer::camera->preMultPV * world->transform;
+
+
     GLCall(glUniformMatrix4fv(uniTransform, 1, GL_FALSE,  glm::value_ptr(mvp)));
 
 

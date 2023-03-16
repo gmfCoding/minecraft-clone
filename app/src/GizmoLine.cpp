@@ -23,7 +23,7 @@ GizmoLine::GizmoLine(glm::vec3 start, glm::vec3 end) {
     glBindVertexArray(VAO);
 
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices.data(), GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, 6, vertices.data(), GL_STATIC_DRAW);
 
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
@@ -46,11 +46,10 @@ int GizmoLine::draw(Camera* camera) {
 
     glUseProgram(shaderProgram);
 
-    glm::mat4 mvp = camera->projection * camera->view;
+    //glm::mat4 mvp = camera->projection * camera->view;
 
-    GLuint uniTransform = glGetUniformLocation(shaderProgram, "MVP");
-    glUniformMatrix4fv(uniTransform, 1, GL_FALSE,  glm::value_ptr(this->transform));
-
+	// this->transfrom is pre mvp'd, see setMVP(..)
+    glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "MVP"), 1, GL_FALSE,  glm::value_ptr(this->transform));
     glUniform3fv(glGetUniformLocation(shaderProgram, "color"), 1, &lineColor[0]);
 
     glBindVertexArray(VAO);

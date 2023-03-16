@@ -1,4 +1,5 @@
 
+#define GLM_FORCE_XYZW_ONLY
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/transform.hpp>
@@ -40,6 +41,7 @@
 
 #include "physics/collision_system.hpp"
 #include "typeutil/AABBWireframe.hpp"
+#include "rendering/line_renderer.hpp"
 
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
@@ -64,7 +66,8 @@ class MinecloneApp : public Engine {
     Object worldtesttrans = Object();
 
     CollisionSystem collisions;
-    std::vector<glm::vec3> sb1Wireframe;
+    std::vector<glm::vec3> collisionWireframe;
+	LineRenderer* collision_lines;
 
     void Start() override {
         Engine::Start();
@@ -77,6 +80,8 @@ class MinecloneApp : public Engine {
             *sb1->position = {0,-3,0};
             sb1->RecalculateAABB();
             collisions.Add(sb1);
+			auto wf = AABBWireframe::CreateWireframe(sb1->aabb);
+			collisionWireframe.insert(collisionWireframe.end(), wf.begin(), wf.end());
         }
 
         {
@@ -86,8 +91,10 @@ class MinecloneApp : public Engine {
             sb1->RecalculateAABB();
             collisions.Add(sb1);
             using namespace AABBWireframe;
-            sb1Wireframe = CreateWriteframe(sb1->aabb);
+			auto wf = AABBWireframe::CreateWireframe(sb1->aabb);
+            collisionWireframe.insert(collisionWireframe.end(), wf.begin(), wf.end());
         }
+
 
 
         this->clear_color = new glm::vec4(0.45f, 0.55f, 0.60f, 1.00f);
@@ -104,7 +111,7 @@ class MinecloneApp : public Engine {
         mc->height = &currentEngine->height;
         mc->SetupPostProcessing();
 
-        Renderer::camera = mc->camera ;
+        Renderer::camera = mc->camera;
         mc->camera->SetPosition(glm::vec3(7.0f,2.0f,7.0f));
         mc->camera->UpdateView();
 
@@ -116,6 +123,13 @@ class MinecloneApp : public Engine {
         line1->setColor(glm::vec3(1,0,0) + glm::vec3(0));
         line2->setColor(glm::vec3(0,1,0) + glm::vec3(0));
         line3->setColor(glm::vec3(0,0,1) + glm::vec3(0));
+		
+		collision_lines = new LineRenderer{};
+		collision_lines->transform->SetPosition(glm::vec3(0));
+		collision_lines->transform->SetScale(glm::vec3(0));
+		collision_lines->transform->SetRotation(glm::vec3(0));
+		collision_lines->lines = collisionWireframe;
+		collision_lines->Bind();
 
         Blocks::InitialiseBlocks();
         auto textures = Blocks::GetTextureNames();
@@ -143,15 +157,12 @@ class MinecloneApp : public Engine {
         //mc->world = World::LoadWorld("world-imports/grasswater.json");
         
         mc->world = World::LoadWorld("world-imports/desolateisland.json");
-        mc->world->transform = glm::translate(glm::vec3(1,0,1)) * glm::mat4_cast(glm::angleAxis(glm::radians(45.0f), glm::vec3(0,1,0)));
+        mc->world->transform = glm::translate(glm::vec3(0,0,0)) * glm::mat4_cast(glm::angleAxis(glm::radians(0.0f), glm::vec3(0,1,0)));
         glm::mat4 mat4id = glm::mat4(1.0);
-
-        
-
         
         worldtesttrans.SetPosition(glm::vec3(-1,0,0));
         worldtesttrans.SetScale(glm::vec3(2,2.5,1.5));
-        worldtesttrans.SetRotation(glm::angleAxis(glm::radians(45.0f), glm::vec3(0,1,0)));
+        worldtesttrans.SetRotation(glm::angleAxis(glm::radians(90.0f), glm::vec3(0,1,0)));
 
         mc->worldtest = World::LoadWorld("world-imports/single.json");
         mc->worldtest->transform = worldtesttrans.GetTransform();
@@ -173,7 +184,7 @@ class MinecloneApp : public Engine {
     void LoadMaterials()
     {
         auto basic = new VertexFragmentCombinationMaterial("basic",          getAssetPath({"shaders", "basic_vertex.shader"}),   getAssetPath({"shaders", "basic_fragment.shader"}));
-        basic->defaults.properties["COLOR"] = glm::vec3(1,1,1);
+        basic->defaults.properties["color"] = glm::vec3(1,1,1);
         
         new VertexFragmentCombinationMaterial("alt_textured",   getAssetPath({"shaders", "alt_tex_vertex.shader"}), getAssetPath({"shaders", "alt_tex_fragment.shader"}));
         auto alttexdebug = new VertexFragmentCombinationMaterial("alt_textured_debug",   getAssetPath({"shaders", "alt_tex_vertex_debug.shader"}), getAssetPath({"shaders", "alt_tex_fragment_debug.shader"}));
@@ -194,13 +205,14 @@ class MinecloneApp : public Engine {
 
         Input();
 
-        glm::mat4 feet = Renderer::camera->projection * Renderer::camera->view * glm::translate(Renderer::camera->GetPosition()) * glm::translate(glm::vec3(0,-1.6,0));//
+        glm::mat4 feet = Renderer::camera->preMultPV * glm::translate(Renderer::camera->GetPosition()) * glm::translate(glm::vec3(0,-1.6,0));//
         
 
         mc->RenderingBegin();
 
         mc->Update();
 
+		collision_lines->Render();
         // Player Feet
         line1->setMVP(feet);
         line2->setMVP(feet);
@@ -210,8 +222,9 @@ class MinecloneApp : public Engine {
         line2->draw(Renderer::camera);
         line3->draw(Renderer::camera);
 
+
         // 0,0,0 Origin
-        feet = Renderer::camera->projection * Renderer::camera->view;
+        feet = Renderer::camera->preMultPV;
         line1->setMVP(feet);
         line2->setMVP(feet);
         line3->setMVP(feet);

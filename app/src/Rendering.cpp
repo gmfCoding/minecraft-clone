@@ -28,7 +28,7 @@ void Renderer::RenderObject(const Object* object)
     GLCall(GLuint uniColour = glGetUniformLocation(program, "col_uni"));
     GLCall(glUniform4fv(uniColour, 1, &(object->colour).x));
 
-    glm::mat4 mvp = camera->projection * camera->view * object->GetTransform();
+    glm::mat4 mvp = camera->preMultPV * object->GetTransform();
 
     GLCall(GLuint uniTransform = glGetUniformLocation(program, "transform"));
     GLCall(glUniformMatrix4fv(uniTransform, 1, GL_FALSE,  glm::value_ptr(mvp)))

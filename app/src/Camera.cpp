@@ -34,4 +34,6 @@ void Camera::UpdateView()
         this->position + direction,
         up
     );
+
+	this->preMultPV = projection * view;
 }

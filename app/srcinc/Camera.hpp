@@ -11,6 +11,8 @@ public:
     glm::mat4 projection;
     glm::vec3 direction;
 
+	glm::mat4 preMultPV;
+
     float yaw = 225.0f;
     float pitch = 0.0f;
 

@@ -123,7 +123,7 @@ void ImageExample::Update()
         // set texture uniform
         glUniform1i(uniTexture, 0);
 
-        glm::mat4 mvp = Renderer::camera->projection * Renderer::camera->view;
+        glm::mat4 mvp = Renderer::camera->preMultPV;
         glUniformMatrix4fv(uniTransform, 1, GL_FALSE,  glm::value_ptr(mvp));
         
         // bind the vao
