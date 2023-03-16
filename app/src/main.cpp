@@ -38,6 +38,9 @@
 #include "GizmoLine.hpp"
 #include "Cube.hpp"
 
+#include "physics/collision_system.hpp"
+#include "typeutil/AABBWireframe.hpp"
+
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
@@ -59,10 +62,34 @@ class MinecloneApp : public Engine {
     std::map<std::string, RectUV> uvMap;
     PrimitiveCube* prim_cube;
     Object worldtesttrans = Object();
+
+    CollisionSystem collisions;
+    std::vector<glm::vec3> sb1Wireframe;
+
     void Start() override {
         Engine::Start();
 
-        
+        collisions = CollisionSystem{};
+
+        {
+            auto sb1 = new Staticbody();
+            sb1->aabb = new AABB(glm::vec3(9,3,9));
+            *sb1->position = {0,-3,0};
+            sb1->RecalculateAABB();
+            collisions.Add(sb1);
+        }
+
+        {
+            auto sb1 = new Rigidbody();
+            sb1->aabb = new AABB({0.6, 0.6, 0.6});
+            *sb1->position = {0,0.4f,0};
+            sb1->RecalculateAABB();
+            collisions.Add(sb1);
+            using namespace AABBWireframe;
+            sb1Wireframe = CreateWriteframe(sb1->aabb);
+        }
+
+
         this->clear_color = new glm::vec4(0.45f, 0.55f, 0.60f, 1.00f);
 
         targetFPS = 144.0;
@@ -145,7 +172,9 @@ class MinecloneApp : public Engine {
 
     void LoadMaterials()
     {
-        new VertexFragmentCombinationMaterial("basic",          getAssetPath({"shaders", "basic_vertex.shader"}),   getAssetPath({"shaders", "basic_fragment.shader"}));
+        auto basic = new VertexFragmentCombinationMaterial("basic",          getAssetPath({"shaders", "basic_vertex.shader"}),   getAssetPath({"shaders", "basic_fragment.shader"}));
+        basic->defaults.properties["COLOR"] = glm::vec3(1,1,1);
+        
         new VertexFragmentCombinationMaterial("alt_textured",   getAssetPath({"shaders", "alt_tex_vertex.shader"}), getAssetPath({"shaders", "alt_tex_fragment.shader"}));
         auto alttexdebug = new VertexFragmentCombinationMaterial("alt_textured_debug",   getAssetPath({"shaders", "alt_tex_vertex_debug.shader"}), getAssetPath({"shaders", "alt_tex_fragment_debug.shader"}));
         alttexdebug->defaults.properties["dsp"] = false;

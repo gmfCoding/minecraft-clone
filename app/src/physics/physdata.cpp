@@ -1,42 +1,35 @@
-#include <glm/vec3.hpp>
+#include "physics/physdata.hpp"
 
-class AABB
+AABB::AABB() : size{}, min{}, max{}
 {
-    glm::vec3 min;
-    glm::vec3 max;
-    
-    float xSize();
-    float ySize();
-    float zSize();
 
-    glm::vec3 center();
+}
 
-    bool intersect(AABB target);
+AABB::AABB(glm::vec3 size) : size(size), min(-(size* 0.5f)), max(size * 0.5f)
+{
 
-    bool pointInside(glm::vec3 point);
-};
+}
 
-
-float AABB::xSize()
+float AABB::dxSize()
 {
     return max.x - min.x;
 }
 
-float AABB::ySize()
+float AABB::dySize()
 {
     return max.y - min.y;
 }
 
-float AABB::zSize()
+float AABB::dzSize()
 {
     return max.z - min.z;
 }
 
 glm::vec3 AABB::center()
 {
-    return glm::vec3(min.x + (xSize()/2.0f),
-                        min.y + (ySize()/2.0f), 
-                        min.z + (zSize()/2.0f));
+    return glm::vec3(min.x + (dxSize()* 0.5f),
+                        min.y + (dySize()* 0.5f), 
+                        min.z + (dzSize()* 0.5f));
 }
 
 bool AABB::intersect(AABB target)

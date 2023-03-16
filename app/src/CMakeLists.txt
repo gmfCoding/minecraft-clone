@@ -19,6 +19,11 @@ Blocks.cpp
 BoxMeshGen.cpp
 TextureManager.cpp
 CommonData.cpp
+transform.cpp
+physics/staticbody.cpp
+physics/collision_system.cpp
+physics/physdata.cpp
+physics/physutil.cpp
 )
 
 list(TRANSFORM LSOURCE PREPEND "${CMAKE_CURRENT_SOURCE_DIR}/")
